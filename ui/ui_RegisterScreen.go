@@ -9,7 +9,7 @@ import (
 
 func showRegisterScreen(controller *controllers.ControllerScreen, dbController *controllers.DBController) controllers.Screen {
 	return func(w fyne.Window) {
-		var form *fyne.Container
+		var form *widget.Card
 		emailEntry := widget.NewEntry()
 		emailEntry.SetPlaceHolder("Email")
 
@@ -33,14 +33,13 @@ func showRegisterScreen(controller *controllers.ControllerScreen, dbController *
 
 		estadoRegistro := widget.NewLabel(estado)
 
-		form = container.NewVBox(
-			widget.NewLabel("Register"),
+		form = widget.NewCard("Register", "Enter mail and password to register", container.NewVBox(
 			emailEntry,
 			passwordEntry,
 			registerButton,
 			returnButton,
 			estadoRegistro,
-		)
+		))
 
 		w.SetContent(form)
 	}

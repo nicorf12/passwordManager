@@ -3,6 +3,7 @@ package ui
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"log"
 	"password_manager/internal/controllers"
@@ -27,17 +28,23 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 				passwordEntry.SetText(password["password"])
 
 				var showHideButton *widget.Button
-				showHideButton = widget.NewButton("Show", func() {
-					if showHideButton.Text == "Hide" {
+
+				isVisible := false
+
+				// Botón con ícono
+				showHideButton = widget.NewButtonWithIcon("", theme.VisibilityIcon(), func() {
+					if isVisible {
 						passwordEntry.Hide()
+						showHideButton.SetIcon(theme.VisibilityIcon())
 						passwordEntry.Refresh()
-						showHideButton.SetText("Show")
 					} else {
 						passwordEntry.Show()
+						showHideButton.SetIcon(theme.VisibilityOffIcon())
 						passwordEntry.Refresh()
-						showHideButton.SetText("Hide")
 					}
+					isVisible = !isVisible
 				})
+				
 				labelEntry := widget.NewLabel(password["label"])
 
 				passwords.Add(container.NewVBox(container.NewHBox(labelEntry, showHideButton), container.NewVBox(passwordEntry)))
@@ -48,13 +55,11 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 			controller.ShowScreen("add")
 		})
 
-		content := container.NewVBox(
-			widget.NewLabel("Passwords"),
-			widget.NewLabel("My mail: "+contUser.GetCurrentUserEmail()),
+		content := widget.NewCard("Passwords", "Here you can see all your registered passwords", container.NewVBox(
 			passwords,
 			addButton,
 			logoutButton,
-		)
+		))
 
 		w.SetContent(content)
 	}

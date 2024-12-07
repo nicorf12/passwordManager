@@ -29,13 +29,12 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			}
 		})
 
-		content := container.NewVBox(
-			widget.NewLabel("Add Password"),
+		content := widget.NewCard("Add password", "Enter a label and password you want to register", container.NewVBox(
 			labelEntry,
 			passwordEntry,
 			addButton,
 			returnButton,
-		)
+		))
 
 		w.SetContent(content)
 	}
