@@ -19,6 +19,6 @@ func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBC
 	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController))
 	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController))
 
-	screenController.ShowScreen("login")
+	screenController.ShowScreen("add")
 	w.ShowAndRun()
 }

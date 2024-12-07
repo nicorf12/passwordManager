@@ -44,7 +44,7 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 					}
 					isVisible = !isVisible
 				})
-				
+
 				labelEntry := widget.NewLabel(password["label"])
 
 				passwords.Add(container.NewVBox(container.NewHBox(labelEntry, showHideButton), container.NewVBox(passwordEntry)))

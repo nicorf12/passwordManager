@@ -69,3 +69,15 @@ func (c *ControllerUser) GetCurrentUserPassword() string {
 	}
 	return c.currentUser.GetPassword()
 }
+
+func (c *ControllerUser) GenerateNewPasswordSafe(length int, useUpper, useLower, useNumbers, useSpecials bool) (string, error) {
+	password, err := security.GenerateSecurePassword(length,
+		useUpper,
+		useLower,
+		useNumbers,
+		useSpecials)
+	if err != nil {
+		return "", err
+	}
+	return password, nil
+}
