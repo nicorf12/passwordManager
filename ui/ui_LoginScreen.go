@@ -11,14 +11,14 @@ import (
 
 func showLoginScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser) controllers.Screen {
 	return func(w fyne.Window) {
-		usernameEntry := widget.NewEntry()
-		usernameEntry.SetPlaceHolder("User")
+		mailEntry := widget.NewEntry()
+		mailEntry.SetPlaceHolder("Mail")
 
 		passwordEntry := widget.NewPasswordEntry()
 		passwordEntry.SetPlaceHolder("Password")
 
 		loginButton := widget.NewButton("Login", func() {
-			err := contUser.Login(usernameEntry.Text, passwordEntry.Text)
+			err := contUser.Login(mailEntry.Text, passwordEntry.Text)
 			if err != nil {
 				log.Println("Err in login: ", err)
 			} else {
@@ -31,13 +31,11 @@ func showLoginScreen(controller *controllers.ControllerScreen, contUser *control
 			controller.ShowScreen("register")
 		})
 
-		form := container.NewVBox(
-			widget.NewLabel("Login"),
-			usernameEntry,
+		form := widget.NewCard("Login", "Enter your mail and password", container.NewVBox(
+			mailEntry,
 			passwordEntry,
 			loginButton,
-			registerButton,
-		)
+			registerButton))
 
 		w.SetContent(form)
 	}

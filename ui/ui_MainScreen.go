@@ -23,7 +23,6 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 			for _, password := range passwordsData {
 				passwordEntry := widget.NewEntry()
 				passwordEntry.Disable()
-				passwordEntry.Enable()
 				passwordEntry.Hide()
 				passwordEntry.SetText(password["password"])
 

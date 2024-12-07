@@ -8,6 +8,7 @@ import (
 
 func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBController) {
 	a := app.New()
+	a.Settings().SetTheme(&customDarkTheme{})
 	w := a.NewWindow("Password Manager")
 
 	w.Resize(fyne.NewSize(400, 400))
