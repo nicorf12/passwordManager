@@ -1,0 +1,54 @@
+# Archivos binarios y compilados
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Directorio bin si se usa para archivos compilados
+/bin/
+
+#bdd local
+db/
+db
+
+# Caché del módulo Go
+/go/pkg/mod/
+
+# Caché del compilador Go
+/go-build/
+
+# Archivos de configuración generados por Go
+*.sum
+
+# Archivos generados por Goland / IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales de desarrollo
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+
+# Archivos específicos del sistema operativo
+# macOS
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
