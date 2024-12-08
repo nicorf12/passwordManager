@@ -3,10 +3,13 @@ package ui
 import (
 	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"log"
 	"password_manager/internal/controllers"
+	"time"
 )
 
 func showLoginScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser) controllers.Screen {
@@ -17,15 +20,26 @@ func showLoginScreen(controller *controllers.ControllerScreen, contUser *control
 		passwordEntry := widget.NewPasswordEntry()
 		passwordEntry.SetPlaceHolder("Password")
 
-		loginButton := widget.NewButton("Login", func() {
+		labelErr := canvas.NewText("", theme.ErrorColor())
+		labelErr.Hide()
+
+		loginFunc := func() {
 			err := contUser.Login(mailEntry.Text, passwordEntry.Text)
 			if err != nil {
+				labelErr.Text = "Login failed: Incorrect mail or password"
+				labelErr.Show()
 				log.Println("Err in login: ", err)
+				go func() {
+					time.Sleep(5 * time.Second)
+					labelErr.Hide()
+				}()
 			} else {
 				controller.ShowScreen("main")
 				fmt.Println("Logged successfully")
 			}
-		})
+		}
+
+		loginButton := widget.NewButton("Login", loginFunc)
 
 		registerButton := widget.NewButton("Register", func() {
 			controller.ShowScreen("register")
@@ -35,7 +49,11 @@ func showLoginScreen(controller *controllers.ControllerScreen, contUser *control
 			mailEntry,
 			passwordEntry,
 			loginButton,
-			registerButton))
+			registerButton,
+			labelErr))
+
+		mailEntry.OnSubmitted = func(_ string) { loginFunc() }
+		passwordEntry.OnSubmitted = func(_ string) { loginFunc() }
 
 		w.SetContent(form)
 	}

@@ -2,9 +2,13 @@ package ui
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"log"
 	"password_manager/internal/controllers"
+	"time"
 )
 
 func showRegisterScreen(controller *controllers.ControllerScreen, dbController *controllers.DBController) controllers.Screen {
@@ -16,13 +20,18 @@ func showRegisterScreen(controller *controllers.ControllerScreen, dbController *
 		passwordEntry := widget.NewPasswordEntry()
 		passwordEntry.SetPlaceHolder("Password")
 
-		estado := ""
+		labelErr := canvas.NewText("", theme.ErrorColor())
+		labelErr.Hide()
 		registerButton := widget.NewButton("Register", func() {
 			_, err := dbController.InsertUser(emailEntry.Text, passwordEntry.Text)
 			if err != nil {
-				estado = "Email already registered"
-			} else {
-				estado = "Registration successful"
+				labelErr.Text = "Register failed: Incorrect mail or password"
+				labelErr.Show()
+				log.Println("Err in register: ", err)
+				go func() {
+					time.Sleep(5 * time.Second)
+					labelErr.Hide()
+				}()
 			}
 			w.SetContent(form)
 		})
@@ -31,14 +40,12 @@ func showRegisterScreen(controller *controllers.ControllerScreen, dbController *
 			controller.ShowScreen("login")
 		})
 
-		estadoRegistro := widget.NewLabel(estado)
-
 		form = widget.NewCard("Register", "Enter mail and password to register", container.NewVBox(
 			emailEntry,
 			passwordEntry,
 			registerButton,
 			returnButton,
-			estadoRegistro,
+			labelErr,
 		))
 
 		w.SetContent(form)

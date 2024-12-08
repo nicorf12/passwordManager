@@ -3,10 +3,13 @@ package ui
 import (
 	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"log"
 	"password_manager/internal/controllers"
+	"time"
 )
 
 func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController) controllers.Screen {
@@ -58,10 +61,18 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 		})
 		generateButton.Hide()
 
+		labelErr := canvas.NewText("", theme.ErrorColor())
+		labelErr.Hide()
 		addButton := widget.NewButton("Add", func() {
 			_, err := dbController.InsertPassword(contUser.GetCurrentUserId(), labelEntry.Text, passwordEntry.Text, contUser.GetCurrentUserPassword())
 			if err != nil {
-				fmt.Println(err)
+				labelErr.Text = "Add failed: Incorrect label or password"
+				labelErr.Show()
+				log.Println("Err in add: ", err)
+				go func() {
+					time.Sleep(5 * time.Second)
+					labelErr.Hide()
+				}()
 			} else {
 				controller.ShowScreen("main")
 			}
@@ -102,6 +113,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			OptionsButton,
 			addButton,
 			returnButton,
+			labelErr,
 		)
 		content = widget.NewCard("Add Password", "Enter a label and password you want to register", body)
 

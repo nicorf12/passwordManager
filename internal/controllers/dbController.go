@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	_ "modernc.org/sqlite" // Importa el driver de SQLite
+	"password_manager/internal/models"
 	"password_manager/security"
 )
 
@@ -51,6 +52,11 @@ func (controller *DBController) Close() error {
 
 // Inserta un nuevo usuario con su hash y salt en la base de datos
 func (controller *DBController) InsertUser(email, password string) (int64, error) {
+	_, err := models.NewUser(email, password)
+	if err != nil {
+		return 0, err
+	}
+
 	salt, err := security.GenerateSalt()
 	if err != nil {
 		return 0, fmt.Errorf("Error generating the salt: %v", err)
@@ -68,6 +74,9 @@ func (controller *DBController) InsertUser(email, password string) (int64, error
 
 // Inserta una nueva contraseña para un usuario
 func (controller *DBController) InsertPassword(userID int64, label, password string, userPassword string) (int64, error) {
+	if len(password) < 8 {
+		return 0, fmt.Errorf("Password must be at least 8 characters")
+	}
 
 	encryptedPassword, err := security.Encrypt([]byte(password), userPassword)
 	if err != nil {
@@ -166,6 +175,10 @@ func (controller *DBController) DeletePassword(passwordID int64) error {
 
 // Actualiza la contraseña en la base de datos
 func (controller *DBController) EditPassword(passwordID int64, newPassword string, userPassword string) error {
+	if len(newPassword) < 8 {
+		return fmt.Errorf("Password must be at least 8 characters")
+	}
+
 	encryptedPassword, err := security.Encrypt([]byte(newPassword), userPassword)
 	if err != nil {
 		return fmt.Errorf("Error encrypting password: %v", err)

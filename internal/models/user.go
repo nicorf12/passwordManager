@@ -17,11 +17,11 @@ func NewUser(email, password string) (*User, error) {
 	if !isValidEmail(email) {
 		return nil, errors.New("Invalid email")
 	}
-	/*
-		if len(password) < 8 {
-			return nil, errors.New("Short password")
-		}
-	*/
+
+	if len(password) < 8 {
+		return nil, errors.New("Short password")
+	}
+
 	return &User{email: email, password: password}, nil
 }
 

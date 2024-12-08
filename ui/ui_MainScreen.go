@@ -93,7 +93,7 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 						passwordID, _ := strconv.ParseInt(password["id"], 10, 64)
 						err := dbController.EditPassword(passwordID, passwordEntry.Text, contUser.GetCurrentUserPassword())
 						if err != nil {
-							fmt.Println("Error editing password: %v", err)
+							fmt.Println("Edited password: short password")
 						} else {
 							fmt.Println("Edited password: %v:%v", password["password"], passwordEntry.Text)
 						}
