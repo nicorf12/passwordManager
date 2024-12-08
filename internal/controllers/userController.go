@@ -20,6 +20,16 @@ func NewControllerUser(dbC *DBController) *ControllerUser {
 	}
 }
 
+// NewControllerUser crea e inicializa una instancia de ControllerUser.
+func NewControllerUserWithSession(dbC *DBController, id int64, email string, password string) *ControllerUser {
+	user, _ := models.NewUser(email, password)
+	user.SetID(id)
+	return &ControllerUser{
+		dbController: dbC,
+		currentUser:  user,
+	}
+}
+
 // Login valida las credenciales y establece el usuario actual si son correctas.
 func (c *ControllerUser) Login(email, password string) error {
 	id, storedPassword, salt, err := c.dbController.GetUserByEmail(email)
@@ -27,15 +37,19 @@ func (c *ControllerUser) Login(email, password string) error {
 		return err
 	}
 
-	if storedPassword != security.GenerateHash(password, salt) {
+	passwordHashed := security.GenerateHash(password, salt)
+	if storedPassword != passwordHashed {
 		return errors.New("Incorrect credentials")
 	}
 
-	c.currentUser, err = models.NewUser(email, password)
+	c.currentUser, err = models.NewUser(email, passwordHashed)
 	c.currentUser.SetID(id)
 	if err != nil {
 		return err
 	}
+
+	security.OnLoginSuccess(id, email, passwordHashed)
+
 	return nil
 }
 
@@ -47,6 +61,7 @@ func (c *ControllerUser) IsLoggedIn() bool {
 // Logout cierra sesión, limpiando la información del usuario actual.
 func (c *ControllerUser) Logout() {
 	c.currentUser = nil
+	security.ClearSession()
 }
 
 // GetCurrentUser devuelve el correo del usuario actual, si está logueado.
