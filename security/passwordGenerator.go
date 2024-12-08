@@ -17,8 +17,8 @@ type config struct {
 
 // Caracteres disponibles
 var (
-	upperSet   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	lowerSet   = "abcdefghijklmnopqrstuvwxyz"
+	upperSet   = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"
+	lowerSet   = "abcdefghijklmnñopqrstuvwxyz"
 	numberSet  = "0123456789"
 	specialSet = "!@#$%^&*()-_=+[]{}<>?/|~"
 )
