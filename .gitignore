@@ -12,6 +12,8 @@
 #bdd local
 db/
 db
+tmp/
+tmp
 
 # Caché del módulo Go
 /go/pkg/mod/
