@@ -32,8 +32,11 @@ func showRegisterScreen(controller *controllers.ControllerScreen, dbController *
 					time.Sleep(5 * time.Second)
 					labelErr.Hide()
 				}()
+
+				w.SetContent(form)
+			} else {
+				controller.ShowScreen("login")
 			}
-			w.SetContent(form)
 		})
 
 		returnButton := widget.NewButton("Return", func() {

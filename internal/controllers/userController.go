@@ -22,7 +22,7 @@ func NewControllerUser(dbC *DBController) *ControllerUser {
 
 // Login valida las credenciales y establece el usuario actual si son correctas.
 func (c *ControllerUser) Login(email, password string) error {
-	storedPassword, salt, err := c.dbController.GetUserByEmail(email)
+	id, storedPassword, salt, err := c.dbController.GetUserByEmail(email)
 	if err != nil {
 		return err
 	}
@@ -32,6 +32,7 @@ func (c *ControllerUser) Login(email, password string) error {
 	}
 
 	c.currentUser, err = models.NewUser(email, password)
+	c.currentUser.SetID(id)
 	if err != nil {
 		return err
 	}

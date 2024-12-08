@@ -30,6 +30,11 @@ func (u *User) GetID() int64 {
 	return u.id
 }
 
+// SetID inserta el ID del usuario
+func (u *User) SetID(id int64) {
+	u.id = id
+}
+
 // GetEmail devuelve el email del usuario
 func (u *User) GetEmail() string {
 	return u.email

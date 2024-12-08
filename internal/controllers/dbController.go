@@ -136,17 +136,20 @@ func (controller *DBController) GetPasswordsByUserID(userID int64, userPassword 
 }
 
 // GetUserByEmail devuelve los datos de un usuario dado su email
-func (controller *DBController) GetUserByEmail(email string) (string, []byte, error) {
-	row := controller.DB.QueryRow("SELECT password, salt FROM users WHERE email = ?", email)
+func (controller *DBController) GetUserByEmail(email string) (int64, string, []byte, error) {
+	row := controller.DB.QueryRow("SELECT id, password, salt FROM users WHERE email = ?", email)
+	var idUser int64
 	var hash, saltBase64 string
-	if err := row.Scan(&hash, &saltBase64); err != nil {
-		return "", nil, fmt.Errorf("Error getting user data: %v", err)
+
+	if err := row.Scan(&idUser, &hash, &saltBase64); err != nil {
+		return 0, "", nil, fmt.Errorf("Error getting user data: %v", err)
 	}
+
 	salt, err := base64.StdEncoding.DecodeString(saltBase64)
 	if err != nil {
-		return "", nil, fmt.Errorf("Error decoding the salt: %v", err)
+		return 0, "", nil, fmt.Errorf("Error decoding the salt: %v", err)
 	}
-	return hash, salt, nil
+	return idUser, hash, salt, nil
 }
 
 // Elimina un usuario y todas sus contraseñas
