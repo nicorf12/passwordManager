@@ -13,7 +13,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 	return func(w fyne.Window) {
 		var content *widget.Card
 		var body *fyne.Container
-		var viewOptiones bool
+		var viewOptiones = true
 
 		returnButton := widget.NewButton("Return", func() {
 			controller.ShowScreen("main")
@@ -24,7 +24,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 
 		passwordEntry := widget.NewPasswordEntry()
 		passwordEntry.SetPlaceHolder("Password")
-		//
+
 		lengthEntry := widget.NewEntry()
 		lengthEntry.SetPlaceHolder("Length (e.g., 16)")
 		lengthEntry.Hide()
@@ -57,7 +57,6 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			}
 		})
 		generateButton.Hide()
-		//
 
 		addButton := widget.NewButton("Add", func() {
 			_, err := dbController.InsertPassword(contUser.GetCurrentUserId(), labelEntry.Text, passwordEntry.Text, contUser.GetCurrentUserPassword())
