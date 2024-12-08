@@ -163,3 +163,17 @@ func (controller *DBController) DeletePassword(passwordID int64) error {
 	}
 	return nil
 }
+
+// Actualiza la contraseña en la base de datos
+func (controller *DBController) EditPassword(passwordID int64, newPassword string, userPassword string) error {
+	encryptedPassword, err := security.Encrypt([]byte(newPassword), userPassword)
+	if err != nil {
+		return fmt.Errorf("Error encrypting password: %v", err)
+	}
+
+	_, err = controller.DB.Exec("UPDATE passwords SET password = ? WHERE id = ?", encryptedPassword, passwordID)
+	if err != nil {
+		return fmt.Errorf("Error updating password: %v", err)
+	}
+	return nil
+}
