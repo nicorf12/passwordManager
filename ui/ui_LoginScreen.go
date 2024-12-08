@@ -9,24 +9,24 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"log"
 	"password_manager/internal/controllers"
+	"password_manager/localization"
 	"time"
 )
 
-func showLoginScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser) controllers.Screen {
+func showLoginScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, localizer *localization.Localizer) controllers.Screen {
 	return func(w fyne.Window) {
 		mailEntry := widget.NewEntry()
-		mailEntry.SetPlaceHolder("Mail")
+		mailEntry.SetPlaceHolder(localizer.Get("mail"))
 
 		passwordEntry := widget.NewPasswordEntry()
-		passwordEntry.SetPlaceHolder("Password")
+		passwordEntry.SetPlaceHolder(localizer.Get("password"))
 
-		labelErr := canvas.NewText("", theme.ErrorColor())
+		labelErr := canvas.NewText(localizer.Get("loginFailed"), theme.ErrorColor())
 		labelErr.Hide()
 
 		loginFunc := func() {
 			err := contUser.Login(mailEntry.Text, passwordEntry.Text)
 			if err != nil {
-				labelErr.Text = "Login failed: Incorrect mail or password"
 				labelErr.Show()
 				log.Println("Err in login: ", err)
 				go func() {
@@ -39,13 +39,13 @@ func showLoginScreen(controller *controllers.ControllerScreen, contUser *control
 			}
 		}
 
-		loginButton := widget.NewButton("Login", loginFunc)
+		loginButton := widget.NewButton(localizer.Get("login"), loginFunc)
 
-		registerButton := widget.NewButton("Register", func() {
+		registerButton := widget.NewButton(localizer.Get("register"), func() {
 			controller.ShowScreen("register")
 		})
 
-		form := widget.NewCard("Login", "Enter your mail and password", container.NewVBox(
+		form := widget.NewCard(localizer.Get("login"), localizer.Get("enterMail&Password"), container.NewVBox(
 			mailEntry,
 			passwordEntry,
 			loginButton,

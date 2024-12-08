@@ -8,12 +8,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"log"
 	"password_manager/internal/controllers"
+	"password_manager/localization"
 	"strconv"
 )
 
-func showMainScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController) controllers.Screen {
+func showMainScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) controllers.Screen {
 	return func(w fyne.Window) {
-		logoutButton := widget.NewButton("Logout", func() {
+		logoutButton := widget.NewButton(localizer.Get("logout"), func() {
 			contUser.Logout()
 			controller.ShowScreen("login")
 		})
@@ -53,9 +54,9 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 					var dialog *widget.PopUp
 					deleteButton = widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
 						dialog = widget.NewPopUp(container.NewVBox(
-							widget.NewLabel("Are you sure you want to delete this password?"),
+							widget.NewLabel(localizer.Get("sureToDeletePassword")),
 							container.NewHBox(
-								widget.NewButton("Cancelar", func() {
+								widget.NewButton(localizer.Get("cancel"), func() {
 									dialog.Hide()
 								}),
 								widget.NewButton("OK", func() {
@@ -114,7 +115,7 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 					})
 					cancelEditionButton.Hide()
 
-					copyButton := widget.NewButtonWithIcon("Copiar", theme.ContentCopyIcon(), func() {
+					copyButton := widget.NewButtonWithIcon(localizer.Get("copy"), theme.ContentCopyIcon(), func() {
 						textToCopy := passwordEntry.Text
 						w.Clipboard().SetContent(textToCopy)
 					})
@@ -128,11 +129,11 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 
 		updatePasswordsList()
 
-		addButton := widget.NewButton("Add", func() {
+		addButton := widget.NewButton(localizer.Get("add"), func() {
 			controller.ShowScreen("add")
 		})
 
-		content := widget.NewCard("Passwords", "Here you can see all your registered passwords", container.NewVBox(
+		content := widget.NewCard(localizer.Get("passwords"), localizer.Get("hereCanSeePasswords"), container.NewVBox(
 			passwords,
 			addButton,
 			logoutButton,

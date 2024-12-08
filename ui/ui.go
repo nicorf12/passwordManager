@@ -4,37 +4,38 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"password_manager/internal/controllers"
+	"password_manager/localization"
 )
 
-func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBController) {
+func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) {
 	a := app.New()
 	a.Settings().SetTheme(&customDarkTheme{})
-	w := a.NewWindow("Password Manager")
+	w := a.NewWindow(localizer.Get("passwordManager"))
 
 	w.Resize(fyne.NewSize(400, 400))
 	screenController := controllers.NewControllerScreen(w)
 
-	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser))
-	screenController.RegisterScreen("main", showMainScreen(screenController, contUser, dbController))
-	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController))
-	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController))
+	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser, localizer))
+	screenController.RegisterScreen("main", showMainScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController, localizer))
+	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController, localizer))
 
 	screenController.ShowScreen("login")
 	w.ShowAndRun()
 }
 
-func StartAuthenticatedUI(contUser *controllers.ControllerUser, dbController *controllers.DBController) {
+func StartAuthenticatedUI(contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) {
 	a := app.New()
 	a.Settings().SetTheme(&customDarkTheme{})
-	w := a.NewWindow("Password Manager")
+	w := a.NewWindow(localizer.Get("passwordManager"))
 
 	w.Resize(fyne.NewSize(400, 400))
 	screenController := controllers.NewControllerScreen(w)
 
-	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser))
-	screenController.RegisterScreen("main", showMainScreen(screenController, contUser, dbController))
-	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController))
-	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController))
+	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser, localizer))
+	screenController.RegisterScreen("main", showMainScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController, localizer))
+	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController, localizer))
 
 	screenController.ShowScreen("main")
 	w.ShowAndRun()

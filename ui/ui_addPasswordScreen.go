@@ -9,39 +9,40 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"log"
 	"password_manager/internal/controllers"
+	"password_manager/localization"
 	"time"
 )
 
-func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController) controllers.Screen {
+func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) controllers.Screen {
 	return func(w fyne.Window) {
 		var content *widget.Card
 		var body *fyne.Container
 		var viewOptiones = true
 
-		returnButton := widget.NewButton("Return", func() {
+		returnButton := widget.NewButton(localizer.Get("return"), func() {
 			controller.ShowScreen("main")
 		})
 
 		labelEntry := widget.NewEntry()
-		labelEntry.SetPlaceHolder("Label")
+		labelEntry.SetPlaceHolder(localizer.Get("label"))
 
 		passwordEntry := widget.NewPasswordEntry()
-		passwordEntry.SetPlaceHolder("Password")
+		passwordEntry.SetPlaceHolder(localizer.Get("password"))
 
 		lengthEntry := widget.NewEntry()
-		lengthEntry.SetPlaceHolder("Length (e.g., 16)")
+		lengthEntry.SetPlaceHolder(localizer.Get("lenght"))
 		lengthEntry.Hide()
 
-		useUpperCheck := widget.NewCheck("Include Uppercase", nil)
-		useLowerCheck := widget.NewCheck("Include Lowercase", nil)
-		useNumbersCheck := widget.NewCheck("Include Numbers", nil)
-		useSpecialsCheck := widget.NewCheck("Include Special Characters", nil)
+		useUpperCheck := widget.NewCheck(localizer.Get("includeUppercase"), nil)
+		useLowerCheck := widget.NewCheck(localizer.Get("includeLowercase"), nil)
+		useNumbersCheck := widget.NewCheck(localizer.Get("includeNumber"), nil)
+		useSpecialsCheck := widget.NewCheck(localizer.Get("includeSpecialCharacter"), nil)
 		useUpperCheck.Hide()
 		useLowerCheck.Hide()
 		useNumbersCheck.Hide()
 		useSpecialsCheck.Hide()
 
-		generateButton := widget.NewButton("Generate Secure Password", func() {
+		generateButton := widget.NewButton(localizer.Get("generateSafePassword"), func() {
 			length := 16
 			if lengthText := lengthEntry.Text; lengthText != "" {
 				fmt.Sscanf(lengthText, "%d", &length)
@@ -61,12 +62,11 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 		})
 		generateButton.Hide()
 
-		labelErr := canvas.NewText("", theme.ErrorColor())
+		labelErr := canvas.NewText(localizer.Get("addFailed"), theme.ErrorColor())
 		labelErr.Hide()
-		addButton := widget.NewButton("Add", func() {
+		addButton := widget.NewButton(localizer.Get("add"), func() {
 			_, err := dbController.InsertPassword(contUser.GetCurrentUserId(), labelEntry.Text, passwordEntry.Text, contUser.GetCurrentUserPassword())
 			if err != nil {
-				labelErr.Text = "Add failed: Incorrect label or password"
 				labelErr.Show()
 				log.Println("Err in add: ", err)
 				go func() {
@@ -115,7 +115,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			returnButton,
 			labelErr,
 		)
-		content = widget.NewCard("Add Password", "Enter a label and password you want to register", body)
+		content = widget.NewCard(localizer.Get("addPassword"), localizer.Get("enterLabel&Password"), body)
 
 		w.SetContent(content)
 	}

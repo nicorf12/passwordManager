@@ -43,10 +43,10 @@ func (c *ControllerUser) Login(email, password string) error {
 	}
 
 	c.currentUser, err = models.NewUser(email, passwordHashed)
-	c.currentUser.SetID(id)
 	if err != nil {
 		return err
 	}
+	c.currentUser.SetID(id)
 
 	security.OnLoginSuccess(id, email, passwordHashed)
 
