@@ -50,16 +50,28 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 					})
 
 					var deleteButton *widget.Button
+					var dialog *widget.PopUp
 					deleteButton = widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
-						passwordID, _ := strconv.ParseInt(password["id"], 10, 64)
-						err := dbController.DeletePassword(passwordID)
-						if err != nil {
-							fmt.Printf("Error deleting password: %v", err)
-						} else {
-							fmt.Printf("Deleted password: %v:%v", password["label"], password["password"])
-						}
-
-						updatePasswordsList()
+						dialog = widget.NewPopUp(container.NewVBox(
+							widget.NewLabel("Are you sure you want to delete this password?"),
+							container.NewHBox(
+								widget.NewButton("Cancelar", func() {
+									dialog.Hide()
+								}),
+								widget.NewButton("OK", func() {
+									passwordID, _ := strconv.ParseInt(password["id"], 10, 64)
+									err := dbController.DeletePassword(passwordID)
+									if err != nil {
+										fmt.Printf("Error deleting password: %v", err)
+									} else {
+										fmt.Printf("Deleted password: %v:%v", password["label"], password["password"])
+									}
+									updatePasswordsList()
+									dialog.Hide()
+								}),
+							),
+						), w.Canvas())
+						dialog.Show()
 					})
 
 					var confirmEditionButton *widget.Button
@@ -68,6 +80,11 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 					editButton = widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
 						confirmEditionButton.Show()
 						cancelEditionButton.Show()
+						passwordEntry.Show()
+						if !isVisible {
+							isVisible = true
+							showHideButton.SetIcon(theme.VisibilityOffIcon())
+						}
 						editButton.Hide()
 						passwordEntry.Enable()
 					})
