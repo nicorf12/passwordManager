@@ -11,6 +11,11 @@ func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBC
 	a := app.New()
 	a.Settings().SetTheme(&customDarkTheme{})
 	w := a.NewWindow(localizer.Get("passwordManager"))
+	icono, err := fyne.LoadResourceFromPath("resources/icono_window.png")
+	if err != nil {
+		panic(err)
+	}
+	w.SetIcon(icono)
 
 	w.Resize(fyne.NewSize(400, 400))
 	screenController := controllers.NewControllerScreen(w)
@@ -28,6 +33,11 @@ func StartAuthenticatedUI(contUser *controllers.ControllerUser, dbController *co
 	a := app.New()
 	a.Settings().SetTheme(&customDarkTheme{})
 	w := a.NewWindow(localizer.Get("passwordManager"))
+	icono, err := fyne.LoadResourceFromPath("resources/icono_window.png")
+	if err != nil {
+		panic(err)
+	}
+	w.SetIcon(icono)
 
 	w.Resize(fyne.NewSize(400, 400))
 	screenController := controllers.NewControllerScreen(w)
