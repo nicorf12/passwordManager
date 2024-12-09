@@ -12,6 +12,11 @@ type SessionData struct {
 }
 
 func SaveSession(data SessionData) error {
+	err := os.MkdirAll("tmp", os.ModePerm)
+	if err != nil {
+		return err
+	}
+
 	file, err := os.Create("tmp/session.json")
 	if err != nil {
 		return err
