@@ -14,6 +14,8 @@ db/
 db
 tmp/
 tmp
+docs
+docs/
 
 # Caché del módulo Go
 /go/pkg/mod/
