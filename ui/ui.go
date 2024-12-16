@@ -11,19 +11,22 @@ func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBC
 	a := app.New()
 	a.Settings().SetTheme(&customDarkTheme{})
 	w := a.NewWindow(localizer.Get("passwordManager"))
-	icono, err := fyne.LoadResourceFromPath("resources/icono_window.png")
+	icono, err := fyne.LoadResourceFromPath("resources/dragon.png")
 	if err != nil {
 		panic(err)
 	}
 	w.SetIcon(icono)
 
-	w.Resize(fyne.NewSize(400, 400))
+	w.Resize(fyne.NewSize(800, 600))
 	screenController := controllers.NewControllerScreen(w)
 
 	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser, localizer))
 	screenController.RegisterScreen("main", showMainScreen(screenController, contUser, dbController, localizer))
 	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController, localizer))
 	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("view", showViewScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("folder", showFolderScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("favorites", showFavoritesScreen(screenController, contUser, dbController, localizer))
 
 	screenController.ShowScreen("login")
 	w.ShowAndRun()
@@ -33,19 +36,22 @@ func StartAuthenticatedUI(contUser *controllers.ControllerUser, dbController *co
 	a := app.New()
 	a.Settings().SetTheme(&customDarkTheme{})
 	w := a.NewWindow(localizer.Get("passwordManager"))
-	icono, err := fyne.LoadResourceFromPath("resources/icono_window.png")
+	icono, err := fyne.LoadResourceFromPath("resources/dragon.png")
 	if err != nil {
 		panic(err)
 	}
 	w.SetIcon(icono)
 
-	w.Resize(fyne.NewSize(400, 400))
+	w.Resize(fyne.NewSize(800, 600))
 	screenController := controllers.NewControllerScreen(w)
 
 	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser, localizer))
 	screenController.RegisterScreen("main", showMainScreen(screenController, contUser, dbController, localizer))
 	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController, localizer))
 	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("view", showViewScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("folder", showFolderScreen(screenController, contUser, dbController, localizer))
+	screenController.RegisterScreen("favorites", showFavoritesScreen(screenController, contUser, dbController, localizer))
 
 	screenController.ShowScreen("main")
 	w.ShowAndRun()

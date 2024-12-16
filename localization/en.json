@@ -25,5 +25,19 @@
   "cancel":"Cancel",
   "registerFailed":"Register failed: Incorrect mail or password",
   "loginFailed":"Login failed: Incorrect mail or password",
-  "addFailed":"Add failed: Incorrect label or password"
+  "addFailed":"Add failed: Incorrect label or password",
+  "menu": "Menu",
+  "options": "Options",
+  "all": "All",
+  "favorites": "Favorites",
+  "categories": "Categories",
+  "view": "View",
+  "name": "Name",
+  "website": "Website",
+  "folder": "Folder",
+  "encryption": "Encrypted",
+  "note": "Note",
+  "edite": "Edit",
+  "hereCanSeeFavoritesPasswords": "Here you can see your favorite passwords",
+  "folderName": "Folder Name"
 }

@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"log"
@@ -13,10 +13,12 @@ import (
 )
 
 func showMainScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) controllers.Screen {
-	return func(w fyne.Window) {
-		logoutButton := widget.NewButton(localizer.Get("logout"), func() {
-			contUser.Logout()
-			controller.ShowScreen("login")
+	return func(w fyne.Window, params ...interface{}) {
+		passwordsTitle := widget.NewLabel(localizer.Get("passwords"))
+		passwordsSubtitle := widget.NewLabel(localizer.Get("hereCanSeePasswords"))
+
+		addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), func() {
+			controller.ShowScreen("add")
 		})
 
 		passwords := container.NewVBox()
@@ -28,117 +30,80 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 			} else {
 				passwords.Objects = nil
 				for _, password := range passwordsData {
-					var buttonBar *fyne.Container
 
-					passwordEntry := widget.NewEntry()
-					passwordEntry.Disable()
-					passwordEntry.Hide()
-					passwordEntry.SetText(password["password"])
-
-					var showHideButton *widget.Button
-					isVisible := false
-					showHideButton = widget.NewButtonWithIcon("", theme.VisibilityIcon(), func() {
-						if isVisible {
-							passwordEntry.Hide()
-							showHideButton.SetIcon(theme.VisibilityIcon())
-							passwordEntry.Refresh()
-						} else {
-							passwordEntry.Show()
-							showHideButton.SetIcon(theme.VisibilityOffIcon())
-							passwordEntry.Refresh()
-						}
-						isVisible = !isVisible
-					})
-
-					var deleteButton *widget.Button
-					var dialog *widget.PopUp
-					deleteButton = widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
-						dialog = widget.NewPopUp(container.NewVBox(
-							widget.NewLabel(localizer.Get("sureToDeletePassword")),
-							container.NewHBox(
-								widget.NewButton(localizer.Get("cancel"), func() {
-									dialog.Hide()
-								}),
-								widget.NewButton("OK", func() {
-									passwordID, _ := strconv.ParseInt(password["id"], 10, 64)
-									err := dbController.DeletePassword(passwordID)
-									if err != nil {
-										fmt.Printf("Error deleting password: %v", err)
-									} else {
-										fmt.Printf("Deleted password: %v:%v", password["label"], password["password"])
-									}
-									updatePasswordsList()
-									dialog.Hide()
-								}),
-							),
-						), w.Canvas())
-						dialog.Show()
-					})
-
-					var confirmEditionButton *widget.Button
-					var cancelEditionButton *widget.Button
-					var editButton *widget.Button
-					editButton = widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
-						confirmEditionButton.Show()
-						cancelEditionButton.Show()
-						passwordEntry.Show()
-						if !isVisible {
-							isVisible = true
-							showHideButton.SetIcon(theme.VisibilityOffIcon())
-						}
-						editButton.Hide()
-						passwordEntry.Enable()
-					})
-
-					confirmEditionButton = widget.NewButtonWithIcon("", theme.ConfirmIcon(), func() {
-						passwordID, _ := strconv.ParseInt(password["id"], 10, 64)
-						err := dbController.EditPassword(passwordID, passwordEntry.Text, contUser.GetCurrentUserPassword())
-						if err != nil {
-							fmt.Println("Edited password: short password")
-						} else {
-							fmt.Println("Edited password: %v:%v", password["password"], passwordEntry.Text)
-						}
-						editButton.Show()
-						confirmEditionButton.Hide()
-						cancelEditionButton.Hide()
-						passwordEntry.Disable()
-						updatePasswordsList()
-					})
-					confirmEditionButton.Hide()
-
-					cancelEditionButton = widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
-						passwordEntry.SetText(password["password"])
-						editButton.Show()
-						confirmEditionButton.Hide()
-						cancelEditionButton.Hide()
-						passwordEntry.Disable()
-					})
-					cancelEditionButton.Hide()
-
-					copyButton := widget.NewButtonWithIcon(localizer.Get("copy"), theme.ContentCopyIcon(), func() {
-						textToCopy := passwordEntry.Text
-						w.Clipboard().SetContent(textToCopy)
-					})
-
-					labelEntry := widget.NewLabel(password["label"])
-					buttonBar = container.NewVBox(container.NewHBox(labelEntry, showHideButton, deleteButton, editButton, confirmEditionButton, cancelEditionButton, copyButton), container.NewVBox(passwordEntry))
-					passwords.Add(buttonBar)
+					passwords.Add(createPasswordItem(w, controller, dbController, password, "main", nil, nil, true))
 				}
 			}
 		}
 
 		updatePasswordsList()
 
-		addButton := widget.NewButton(localizer.Get("add"), func() {
-			controller.ShowScreen("add")
-		})
-
-		content := widget.NewCard(localizer.Get("passwords"), localizer.Get("hereCanSeePasswords"), container.NewVBox(
+		content := container.NewHSplit(menu(controller, contUser, dbController, localizer), container.NewVBox(
+			container.NewHBox(passwordsTitle, addButton),
+			passwordsSubtitle,
 			passwords,
-			addButton,
-			logoutButton,
 		))
-
+		content.SetOffset(0.25)
 		w.SetContent(content)
 	}
+}
+
+func createPasswordItem(w fyne.Window, controller *controllers.ControllerScreen, dbController *controllers.DBController, passwordDetails map[string]string, returnScreen string, folderName *string, folderId *int64, isDarkTheme bool) fyne.CanvasObject {
+	icon := GetIconForPassword(passwordDetails, isDarkTheme)
+	iconWidget := widget.NewIcon(icon)
+	iconWidget.Resize(fyne.NewSize(60, 60))
+	iconContainer := container.New(
+		layout.NewGridLayout(3),
+		layout.NewSpacer(),
+		iconWidget,
+		layout.NewSpacer(),
+	)
+	iconContainer.Resize(fyne.NewSize(80, 80))
+
+	nameLabel := widget.NewLabel(passwordDetails["label"])
+	detailLabel := widget.NewLabel(passwordDetails["name"])
+
+	var iconFavorite fyne.Resource
+	if passwordDetails["is_favorite"] == "1" {
+		iconFavorite = theme.CheckButtonCheckedIcon()
+	} else {
+		iconFavorite = theme.CheckButtonIcon()
+	}
+
+	var favoriteButton *widget.Button
+	favoriteButton = widget.NewButtonWithIcon("", iconFavorite, func() {
+		passwordID, _ := strconv.ParseInt(passwordDetails["id"], 10, 64)
+		dbController.EditFavoritePassword(passwordID)
+		if passwordDetails["is_favorite"] == "1" {
+			passwordDetails["is_favorite"] = "0"
+			favoriteButton.SetIcon(theme.CheckButtonIcon())
+		} else {
+			passwordDetails["is_favorite"] = "1"
+			favoriteButton.SetIcon(theme.CheckButtonCheckedIcon())
+		}
+		favoriteButton.Refresh()
+	})
+	copyButton := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), func() {
+		w.Clipboard().SetContent(passwordDetails["password"])
+	})
+	detailButton := widget.NewButtonWithIcon("", theme.NavigateNextIcon(), func() {
+		if returnScreen == "main" || returnScreen == "favorites" {
+			controller.ShowScreen("view", passwordDetails, returnScreen)
+		} else {
+			controller.ShowScreen("view", passwordDetails, returnScreen, *folderName, *folderId)
+		}
+	})
+
+	info := container.NewVBox(
+		nameLabel,
+		detailLabel,
+	)
+
+	buttons := container.NewHBox(
+		favoriteButton,
+		copyButton,
+		detailButton,
+	)
+
+	return container.NewBorder(nil, nil, iconContainer, buttons, info)
 }

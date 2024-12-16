@@ -6,8 +6,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// Screen es una función que configura el contenido de una pantalla en la ventana principal.
-type Screen func(w fyne.Window)
+// Screen es una función que configura el contenido de una pantalla en la ventana principal,
+// y acepta parámetros opcionales.
+type Screen func(w fyne.Window, params ...interface{})
 
 // ControllerScreen gestiona los cambios de pantalla.
 type ControllerScreen struct {
@@ -29,9 +30,10 @@ func (c *ControllerScreen) RegisterScreen(name string, screen Screen) {
 }
 
 // ShowScreen cambia a la pantalla registrada con el nombre proporcionado.
-func (c *ControllerScreen) ShowScreen(name string) {
+// También puede pasar parámetros opcionales para personalizar el contenido.
+func (c *ControllerScreen) ShowScreen(name string, params ...interface{}) {
 	if screen, exists := c.screens[name]; exists {
-		screen(c.window)
+		screen(c.window, params...)
 	} else {
 		c.window.SetContent(container.NewCenter(
 			widget.NewLabel("Error: Screen not found"),

@@ -25,5 +25,19 @@
   "cancel": "Cancelar",
   "registerFailed": "Falha no registro: E-mail ou senha incorretos",
   "loginFailed": "Falha no login: E-mail ou senha incorretos",
-  "addFailed": "Falha ao adicionar: Etiqueta ou senha incorreta"
+  "addFailed": "Falha ao adicionar: Etiqueta ou senha incorreta",
+  "menu": "Menu",
+  "options": "Opções",
+  "all": "Todos",
+  "favorites": "Favoritos",
+  "categories": "Categorias",
+  "view": "Visualizar",
+  "name": "Nome",
+  "website": "Site",
+  "folder": "Pasta",
+  "encryption": "Criptografado",
+  "note": "Nota",
+  "edite": "Editar",
+  "hereCanSeeFavoritesPasswords": "Aqui você pode ver suas senhas favoritas",
+  "folderName": "Nome da Pasta"
 }

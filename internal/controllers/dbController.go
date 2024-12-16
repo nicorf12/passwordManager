@@ -7,6 +7,7 @@ import (
 	_ "modernc.org/sqlite" // Importa el driver de SQLite
 	"password_manager/internal/models"
 	"password_manager/security"
+	"strings"
 )
 
 // Estructura para el controlador de la base de datos
@@ -21,8 +22,7 @@ func NewDBController() (*DBController, error) {
 		return nil, fmt.Errorf("Error connecting to database: %v", err)
 	}
 
-	// Crear las tablas si no existen
-	_, err = db.Exec(`
+	_, err = db.Exec(`	
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			email TEXT NOT NULL UNIQUE,
@@ -33,11 +33,25 @@ func NewDBController() (*DBController, error) {
 		CREATE TABLE IF NOT EXISTS passwords (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_id INTEGER NOT NULL,
+			folder_id INTEGER NOT NULL,
 			label TEXT NOT NULL,
+			name TEXT NOT NULL,
 			password TEXT NOT NULL,
-			FOREIGN KEY(user_id) REFERENCES users(id)
+			website TEXT,
+			note TEXT,
+			encrypted TEXT NOT NULL,
+			last_update DATETIME DEFAULT CURRENT_TIMESTAMP,
+			is_favorite INTEGER DEFAULT 0,
+			FOREIGN KEY(user_id) REFERENCES users(id),
+			FOREIGN KEY(folder_id) REFERENCES folders(id)
+		);
+	
+		CREATE TABLE IF NOT EXISTS folders (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL
 		);
 	`)
+
 	if err != nil {
 		return nil, fmt.Errorf("Error creating tables: %v", err)
 	}
@@ -46,12 +60,12 @@ func NewDBController() (*DBController, error) {
 }
 
 // Cierra la conexión con la base de datos
-func (controller *DBController) Close() error {
-	return controller.DB.Close()
+func (db *DBController) Close() error {
+	return db.DB.Close()
 }
 
 // Inserta un nuevo usuario con su hash y salt en la base de datos
-func (controller *DBController) InsertUser(email, password string) (int64, error) {
+func (db *DBController) InsertUser(email, password string) (int64, error) {
 	_, err := models.NewUser(email, password)
 	if err != nil {
 		return 0, err
@@ -64,7 +78,7 @@ func (controller *DBController) InsertUser(email, password string) (int64, error
 	hash := security.GenerateHash(password, salt)
 
 	fmt.Println("Inserting...")
-	result, err := controller.DB.Exec("INSERT INTO users (email, password, salt) VALUES (?, ?, ?)", email, hash, base64.StdEncoding.EncodeToString(salt))
+	result, err := db.DB.Exec("INSERT INTO users (email, password, salt) VALUES (?, ?, ?)", email, hash, base64.StdEncoding.EncodeToString(salt))
 	if err != nil {
 		return 0, fmt.Errorf("Error inserting user: %v", err)
 	}
@@ -73,7 +87,7 @@ func (controller *DBController) InsertUser(email, password string) (int64, error
 }
 
 // Inserta una nueva contraseña para un usuario
-func (controller *DBController) InsertPassword(userID int64, label, password string, userPassword string) (int64, error) {
+func (db *DBController) InsertPassword(userID int64, folderID int64, label, name, password, website, note, encrypted string, userPassword string) (int64, error) {
 	if len(password) < 8 {
 		return 0, fmt.Errorf("Password must be at least 8 characters")
 	}
@@ -84,7 +98,7 @@ func (controller *DBController) InsertPassword(userID int64, label, password str
 	}
 
 	fmt.Println("Saving password")
-	result, err := controller.DB.Exec("INSERT INTO passwords (user_id, label, password) VALUES (?, ?, ?)", userID, label, encryptedPassword)
+	result, err := db.DB.Exec("INSERT INTO passwords (user_id, folder_id,label, name, password, website, note, encrypted) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userID, folderID, label, name, encryptedPassword, website, note, encrypted)
 	if err != nil {
 		return 0, fmt.Errorf("Error inserting password: %v", err)
 	}
@@ -97,9 +111,22 @@ func (controller *DBController) InsertPassword(userID int64, label, password str
 	return passwordID, nil
 }
 
+// Crear una nueva carpeta
+func (db *DBController) InsertFolder(name string) (int64, error) {
+	result, err := db.DB.Exec("INSERT INTO folders (name) VALUES (?)", name)
+	if err != nil {
+		return 0, fmt.Errorf("error al crear la carpeta: %v", err)
+	}
+	folderID, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("error al obtener el ID de la carpeta creada: %v", err)
+	}
+	return folderID, nil
+}
+
 // Obtiene un usuario por su ID
-func (controller *DBController) GetUserByID(userID int64) (string, string, error) {
-	row := controller.DB.QueryRow("SELECT email, password FROM users WHERE id = ?", userID)
+func (db *DBController) GetUserByID(userID int64) (string, string, error) {
+	row := db.DB.QueryRow("SELECT email, password FROM users WHERE id = ?", userID)
 	var email, password string
 	if err := row.Scan(&email, &password); err != nil {
 		return "", "", fmt.Errorf("Error getting user: %v", err)
@@ -108,36 +135,44 @@ func (controller *DBController) GetUserByID(userID int64) (string, string, error
 }
 
 // Obtiene todas las contraseñas de un usuario por su ID
-func (controller *DBController) GetPasswordsByUserID(userID int64, userPassword string) ([]map[string]string, error) {
-	rows, err := controller.DB.Query("SELECT id, label, password FROM passwords WHERE user_id = ?", userID)
+func (db *DBController) GetPasswordsByUserID(userID int64, userPassword string) ([]map[string]string, error) {
+	rows, err := db.DB.Query("SELECT id,folder_id,label,name,password,website,note,encrypted,last_update,is_favorite FROM passwords WHERE user_id = ?", userID)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting passwords: %v", err)
+		return nil, fmt.Errorf("error getting passwords: %v", err)
 	}
 	defer rows.Close()
 
 	var passwords []map[string]string
 	for rows.Next() {
-		var id int64
-		var label, password string
-		if err := rows.Scan(&id, &label, &password); err != nil {
-			return nil, fmt.Errorf("Error scanning row: %v", err)
+		var id, folderId int64
+		var label, name, password, website, note, encrypted, lastUpdate string
+		var isFavorite int
+		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encrypted, &lastUpdate, &isFavorite); err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 		decryptPassword, _ := security.Decrypt(password, userPassword)
 		passwords = append(passwords, map[string]string{
-			"id":       fmt.Sprintf("%d", id),
-			"label":    label,
-			"password": decryptPassword,
+			"id":          fmt.Sprintf("%d", id),
+			"folder_id":   fmt.Sprintf("%d", folderId),
+			"label":       label,
+			"name":        name,
+			"password":    decryptPassword,
+			"website":     website,
+			"note":        note,
+			"encrypted":   encrypted,
+			"last_update": lastUpdate,
+			"is_favorite": fmt.Sprintf("%d", isFavorite),
 		})
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("Error iterating over rows: %v", err)
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 	return passwords, nil
 }
 
 // GetUserByEmail devuelve los datos de un usuario dado su email
-func (controller *DBController) GetUserByEmail(email string) (int64, string, []byte, error) {
-	row := controller.DB.QueryRow("SELECT id, password, salt FROM users WHERE email = ?", email)
+func (db *DBController) GetUserByEmail(email string) (int64, string, []byte, error) {
+	row := db.DB.QueryRow("SELECT id, password, salt FROM users WHERE email = ?", email)
 	var idUser int64
 	var hash, saltBase64 string
 
@@ -152,14 +187,113 @@ func (controller *DBController) GetUserByEmail(email string) (int64, string, []b
 	return idUser, hash, salt, nil
 }
 
+// GetAllFolders devuelve todas las carpetas como un mapa de nombre a ID.
+func (db *DBController) GetAllFolders() (map[string]int64, error) {
+	rows, err := db.DB.Query("SELECT id, name FROM folders")
+	if err != nil {
+		return nil, fmt.Errorf("error fetching folders: %v", err)
+	}
+	defer rows.Close()
+
+	folders := make(map[string]int64)
+	for rows.Next() {
+		var id int64
+		var name string
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, fmt.Errorf("error scanning folder: %v", err)
+		}
+		folders[name] = id
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	return folders, nil
+}
+
+// Obtiene todas las contraseñas de un usuario para una carpeta específica
+func (db *DBController) GetPasswordsByFolderAndUserID(userID int64, folderID int64, userPassword string) ([]map[string]string, error) {
+	rows, err := db.DB.Query("SELECT id, folder_id, label, name, password, website, note, encrypted, last_update, is_favorite FROM passwords WHERE user_id = ? AND folder_id = ?", userID, folderID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting passwords by folder and user: %v", err)
+	}
+	defer rows.Close()
+
+	var passwords []map[string]string
+	for rows.Next() {
+		var id, folderId int64
+		var label, name, password, website, note, encrypted, lastUpdate string
+		var isFavorite int
+		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encrypted, &lastUpdate, &isFavorite); err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		decryptPassword, _ := security.Decrypt(password, userPassword)
+		passwords = append(passwords, map[string]string{
+			"id":          fmt.Sprintf("%d", id),
+			"folder_id":   fmt.Sprintf("%d", folderId),
+			"label":       label,
+			"name":        name,
+			"password":    decryptPassword,
+			"website":     website,
+			"note":        note,
+			"encrypted":   encrypted,
+			"last_update": lastUpdate,
+			"is_favorite": fmt.Sprintf("%d", isFavorite),
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+	return passwords, nil
+}
+
+// Obtiene todas las contraseñas marcadas como favoritas de un usuario por su ID
+func (db *DBController) GetPasswordsByFavoriteAndUserID(userID int64, userPassword string) ([]map[string]string, error) {
+	rows, err := db.DB.Query("SELECT id, folder_id, label, name, password, website, note, encrypted, last_update, is_favorite FROM passwords WHERE user_id = ? AND is_favorite = 1", userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting favorite passwords by user: %v", err)
+	}
+	defer rows.Close()
+
+	var passwords []map[string]string
+	for rows.Next() {
+		var id, folderId int64
+		var label, name, password, website, note, encrypted, lastUpdate string
+		var isFavorite int
+		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encrypted, &lastUpdate, &isFavorite); err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		decryptPassword, _ := security.Decrypt(password, userPassword)
+		passwords = append(passwords, map[string]string{
+			"id":          fmt.Sprintf("%d", id),
+			"folder_id":   fmt.Sprintf("%d", folderId),
+			"label":       label,
+			"name":        name,
+			"password":    decryptPassword,
+			"website":     website,
+			"note":        note,
+			"encrypted":   encrypted,
+			"last_update": lastUpdate,
+			"is_favorite": fmt.Sprintf("%d", isFavorite),
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+	return passwords, nil
+}
+
 // Elimina un usuario y todas sus contraseñas
-func (controller *DBController) DeleteUser(userID int64) error {
-	_, err := controller.DB.Exec("DELETE FROM passwords WHERE user_id = ?", userID)
+func (db *DBController) DeleteUser(userID int64) error {
+	_, err := db.DB.Exec("DELETE FROM passwords WHERE user_id = ?", userID)
 	if err != nil {
 		return fmt.Errorf("Error deleting user passwords: %v", err)
 	}
 
-	_, err = controller.DB.Exec("DELETE FROM users WHERE id = ?", userID)
+	_, err = db.DB.Exec("DELETE FROM users WHERE id = ?", userID)
 	if err != nil {
 		return fmt.Errorf("Error deleting user: %v", err)
 	}
@@ -168,28 +302,105 @@ func (controller *DBController) DeleteUser(userID int64) error {
 }
 
 // Elimina una contraseña por su ID
-func (controller *DBController) DeletePassword(passwordID int64) error {
-	_, err := controller.DB.Exec("DELETE FROM passwords WHERE id = ?", passwordID)
+func (db *DBController) DeletePassword(passwordID int64) error {
+	_, err := db.DB.Exec("DELETE FROM passwords WHERE id = ?", passwordID)
 	if err != nil {
 		return fmt.Errorf("Error deleting user: %v", err)
 	}
 	return nil
 }
 
+// Borrar una carpeta
+func (db *DBController) DeleteFolder(folderID int64) error {
+	result, err := db.DB.Exec("DELETE FROM folders WHERE id = ?", folderID)
+	if err != nil {
+		return fmt.Errorf("Error al borrar la carpeta: %v", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("Error al verificar filas afectadas: %v", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("No se encontró una carpeta con ID %d", folderID)
+	}
+	return nil
+}
+
 // Actualiza la contraseña en la base de datos
-func (controller *DBController) EditPassword(passwordID int64, newPassword string, userPassword string) error {
-	if len(newPassword) < 8 {
-		return fmt.Errorf("Password must be at least 8 characters")
+func (db *DBController) EditPassword(passwordID int64, updates map[string]interface{}, userPassword string) error {
+	// Iniciar una lista para los valores y una lista para las columnas
+	var setClauses []string
+	var args []interface{}
+
+	// Si se incluye el campo 'password', encriptarlo y agregarlo al mapa
+	if newPassword, ok := updates["password"]; ok {
+		if len(newPassword.(string)) < 8 {
+			return fmt.Errorf("Password must be at least 8 characters")
+		}
+
+		encryptedPassword, err := security.Encrypt([]byte(newPassword.(string)), userPassword)
+		if err != nil {
+			return fmt.Errorf("Error encrypting password: %v", err)
+		}
+
+		setClauses = append(setClauses, "password = ?")
+		args = append(args, encryptedPassword)
 	}
 
-	encryptedPassword, err := security.Encrypt([]byte(newPassword), userPassword)
-	if err != nil {
-		return fmt.Errorf("Error encrypting password: %v", err)
+	for column, value := range updates {
+		if column != "password" {
+			setClauses = append(setClauses, fmt.Sprintf("%s = ?", column))
+			args = append(args, value)
+		}
 	}
 
-	_, err = controller.DB.Exec("UPDATE passwords SET password = ? WHERE id = ?", encryptedPassword, passwordID)
-	if err != nil {
-		return fmt.Errorf("Error updating password: %v", err)
+	if len(setClauses) == 0 {
+		return fmt.Errorf("no fields to update")
 	}
+
+	setClause := "SET " + strings.Join(setClauses, ", ")
+	sqlQuery := fmt.Sprintf("UPDATE passwords %s WHERE id = ?", setClause)
+
+	args = append(args, passwordID)
+	_, err := db.DB.Exec(sqlQuery, args...)
+	if err != nil {
+		return fmt.Errorf("error updating password: %v", err)
+	}
+
+	return nil
+}
+
+// Actualizar el nombre de una carpeta
+func (db *DBController) EditFolder(folderID int64, newName string) error {
+	result, err := db.DB.Exec("UPDATE folders SET name = ? WHERE id = ?", newName, folderID)
+	if err != nil {
+		return fmt.Errorf("Error al actualizar la carpeta: %v", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("Error al verificar filas afectadas: %v", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("No se encontró una carpeta con ID %d", folderID)
+	}
+	return nil
+}
+
+// Cambia el estado de favorito de una contraseña por su ID
+func (db *DBController) EditFavoritePassword(passwordID int64) error {
+	result, err := db.DB.Exec("UPDATE passwords SET is_favorite = CASE WHEN is_favorite = 1 THEN 0 ELSE 1 END WHERE id = ?", passwordID)
+	if err != nil {
+		return fmt.Errorf("error updating favorite status: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error checking rows affected: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no password found with the specified ID")
+	}
+
 	return nil
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"os"
 	"password_manager/internal/controllers"
 	"password_manager/localization"
 	"password_manager/security"
@@ -10,13 +10,7 @@ import (
 )
 
 func main() {
-	langEnv := os.Getenv("LANG")
-
-	if langEnv == "" {
-		langEnv = "en"
-	}
-
-	langCode := langEnv[:2]
+	langCode := getLenguage()
 
 	dbController, err := controllers.NewDBController()
 	if err != nil {
@@ -31,11 +25,11 @@ func main() {
 	var contUser *controllers.ControllerUser
 	session, err := security.LoadSession()
 	if err == nil && session != nil {
-		log.Println("Session found, starting authenticated UI.")
+		fmt.Println("Session found, starting authenticated UI.")
 		contUser = controllers.NewControllerUserWithSession(dbController, session.UserID, session.UserMail, session.HashedPassword)
 		ui.StartAuthenticatedUI(contUser, dbController, localizer)
 	} else {
-		log.Println("No session found, starting login UI.")
+		fmt.Println("No session found, starting login UI.")
 		contUser = controllers.NewControllerUser(dbController)
 		ui.StartUI(contUser, dbController, localizer)
 	}
@@ -44,4 +38,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error closing connection to database: %v", err)
 	}
+}
+
+func getLenguage() string {
+	return "es"
 }

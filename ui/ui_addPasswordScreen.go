@@ -14,20 +14,29 @@ import (
 )
 
 func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) controllers.Screen {
-	return func(w fyne.Window) {
-		var content *widget.Card
-		var body *fyne.Container
+	return func(w fyne.Window, params ...interface{}) {
+		var content *fyne.Container
 		var viewOptiones = true
+		var scrollContent *container.Scroll
 
-		returnButton := widget.NewButton(localizer.Get("return"), func() {
+		returnButton := widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
 			controller.ShowScreen("main")
 		})
 
-		labelEntry := widget.NewEntry()
-		labelEntry.SetPlaceHolder(localizer.Get("label"))
+		addTitle := widget.NewLabel(localizer.Get("addPassword"))
+		addSubtitle := widget.NewLabel(localizer.Get("enterLabel&Password"))
+		passwordLabel := widget.NewLabel(localizer.Get("label"))
+		passwordName := widget.NewLabel(localizer.Get("name"))
+		passwordPassword := widget.NewLabel(localizer.Get("password"))
+		passwordWebsite := widget.NewLabel(localizer.Get("website"))
+		passwordFolder := widget.NewLabel(localizer.Get("folder"))
+		passwordEncryption := widget.NewLabel(localizer.Get("encryption"))
+		passwordNote := widget.NewLabel(localizer.Get("note"))
 
+		labelEntry := widget.NewEntry()
+		nameEntry := widget.NewEntry()
+		websiteEntry := widget.NewEntry()
 		passwordEntry := widget.NewPasswordEntry()
-		passwordEntry.SetPlaceHolder(localizer.Get("password"))
 
 		lengthEntry := widget.NewEntry()
 		lengthEntry.SetPlaceHolder(localizer.Get("lenght"))
@@ -60,12 +69,37 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 				passwordEntry.SetText(password)
 			}
 		})
-		generateButton.Hide()
+
+		folders, err := dbController.GetAllFolders()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var folderKeys []string
+		for folderName := range folders {
+			folderKeys = append(folderKeys, folderName)
+		}
+
+		selectFolder := widget.NewSelect(folderKeys, func(selected string) {
+			fmt.Println("Selected:", selected)
+		})
+
+		encryption := []string{"AES"}
+		selectEncryption := widget.NewSelect(encryption, func(selected string) {
+			fmt.Println("Selected:", selected)
+		})
+		selectEncryption.Selected = "AES"
+
+		note := widget.NewMultiLineEntry()
 
 		labelErr := canvas.NewText(localizer.Get("addFailed"), theme.ErrorColor())
 		labelErr.Hide()
 		addButton := widget.NewButton(localizer.Get("add"), func() {
-			_, err := dbController.InsertPassword(contUser.GetCurrentUserId(), labelEntry.Text, passwordEntry.Text, contUser.GetCurrentUserPassword())
+			var idFolder int64
+			if _, ok := folders[selectFolder.Selected]; ok {
+				idFolder = folders[selectFolder.Selected]
+			}
+			_, err := dbController.InsertPassword(contUser.GetCurrentUserId(), idFolder, labelEntry.Text, nameEntry.Text, passwordEntry.Text, websiteEntry.Text, note.Text, selectEncryption.Selected, contUser.GetCurrentUserPassword())
 			if err != nil {
 				labelErr.Show()
 				log.Println("Err in add: ", err)
@@ -98,11 +132,17 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 				OptionsButton.SetIcon(theme.MenuDropDownIcon())
 			}
 			viewOptiones = !viewOptiones
-			body.Refresh()
+			scrollContent.Refresh()
 		})
 
-		body = container.NewVBox(
+		content = container.NewVBox(
+			container.NewHBox(addTitle, returnButton),
+			addSubtitle,
+			passwordLabel,
 			labelEntry,
+			passwordName,
+			nameEntry,
+			passwordPassword,
 			passwordEntry,
 			lengthEntry,
 			useUpperCheck,
@@ -111,12 +151,19 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			useSpecialsCheck,
 			generateButton,
 			OptionsButton,
+			passwordWebsite,
+			websiteEntry,
+			passwordFolder,
+			selectFolder,
+			passwordEncryption,
+			selectEncryption,
+			passwordNote,
+			note,
 			addButton,
-			returnButton,
 			labelErr,
 		)
-		content = widget.NewCard(localizer.Get("addPassword"), localizer.Get("enterLabel&Password"), body)
 
-		w.SetContent(content)
+		scrollContent = container.NewScroll(content)
+		w.SetContent(scrollContent)
 	}
 }

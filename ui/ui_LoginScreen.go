@@ -14,7 +14,7 @@ import (
 )
 
 func showLoginScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, localizer *localization.Localizer) controllers.Screen {
-	return func(w fyne.Window) {
+	return func(w fyne.Window, params ...interface{}) {
 		mailEntry := widget.NewEntry()
 		mailEntry.SetPlaceHolder(localizer.Get("mail"))
 

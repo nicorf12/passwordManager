@@ -13,7 +13,7 @@ import (
 )
 
 func showRegisterScreen(controller *controllers.ControllerScreen, dbController *controllers.DBController, localizer *localization.Localizer) controllers.Screen {
-	return func(w fyne.Window) {
+	return func(w fyne.Window, params ...interface{}) {
 		var form *widget.Card
 		emailEntry := widget.NewEntry()
 		emailEntry.SetPlaceHolder(localizer.Get("mail"))
