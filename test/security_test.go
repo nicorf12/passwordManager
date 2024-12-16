@@ -5,25 +5,70 @@ import (
 	"testing"
 )
 
-func TestEncryptDecrypt(t *testing.T) {
+func TestEncryptDecryptAES(t *testing.T) {
 	password := "testpassword"
 	originalText := "Hello, World!"
 
-	// Encriptar
-	encrypted, err := security.Encrypt([]byte(originalText), password)
+	encrypted, err := security.EncryptAES([]byte(originalText), password)
 	if err != nil {
 		t.Fatalf("Error al encriptar: %v", err)
 	}
 
-	// Desencriptar
-	decrypted, err := security.Decrypt(encrypted, password)
+	decrypted, err := security.DecryptAES(encrypted, password)
 	if err != nil {
 		t.Fatalf("Error al desencriptar: %v", err)
 	}
 
-	// Verificar que el texto original y el desencriptado coinciden
 	if decrypted != originalText {
 		t.Fatalf("Texto desencriptado no coincide con el original. Esperado: %s, Obtenido: %s", originalText, decrypted)
+	}
+}
+
+func TestEncryptDecryptXChaCha20Poly1305(t *testing.T) {
+	key := "thisisaverysecurekey123456"
+	originalText := "Hello, World!"
+
+	encrypted, err := security.EncryptXChaCha20Poly1305([]byte(originalText), key)
+	if err != nil {
+		t.Fatalf("Error al encriptar: %v", err)
+	}
+
+	decrypted, err := security.DecryptXChaCha20Poly1305(encrypted, key)
+	if err != nil {
+		t.Fatalf("Error al desencriptar: %v", err)
+	}
+
+	if decrypted != originalText {
+		t.Fatalf("Texto desencriptado no coincide con el original. Esperado: %s, Obtenido: %s", originalText, decrypted)
+	}
+}
+
+func TestEncryptDecryptDES(t *testing.T) {
+	key := "12345678"
+	originalText := "Hello, World!"
+
+	encrypted, err := security.EncryptDES([]byte(originalText), key)
+	if err != nil {
+		t.Fatalf("Error al encriptar: %v", err)
+	}
+
+	decrypted, err := security.DecryptDES(encrypted, key)
+	if err != nil {
+		t.Fatalf("Error al desencriptar: %v", err)
+	}
+
+	if decrypted != originalText {
+		t.Fatalf("Texto desencriptado no coincide con el original. Esperado: %s, Obtenido: %s", originalText, decrypted)
+	}
+}
+
+func TestInvalidKeyLengthDES(t *testing.T) {
+	invalidKey := "short"
+	originalText := "Hello, World!"
+
+	_, err := security.EncryptDES([]byte(originalText), invalidKey)
+	if err == nil {
+		t.Fatal("Se esperaba un error debido a la longitud incorrecta de la clave")
 	}
 }
 
@@ -34,10 +79,8 @@ func TestGenerateHash(t *testing.T) {
 		t.Fatalf("Error al generar salt: %v", err)
 	}
 
-	// Generar el hash
 	hash := security.GenerateHash(password, salt)
 
-	// Verificar que el hash no sea vacío
 	if hash == "" {
 		t.Fatal("El hash generado está vacío")
 	}
@@ -50,15 +93,12 @@ func TestVerifyPassword(t *testing.T) {
 		t.Fatalf("Error al generar salt: %v", err)
 	}
 
-	// Generar el hash del password
 	storedHash := security.GenerateHash(password, salt)
 
-	// Verificar que la contraseña sea correcta
 	if !security.VerifyPassword(password, storedHash, salt) {
 		t.Fatal("La verificación de la contraseña falló")
 	}
 
-	// Verificar una contraseña incorrecta
 	if security.VerifyPassword("wrongpassword", storedHash, salt) {
 		t.Fatal("La verificación de la contraseña incorrecta debería haber fallado")
 	}
@@ -77,13 +117,11 @@ func TestGenerateSecurePassword(t *testing.T) {
 	useNumbers := true
 	useSpecials := true
 
-	// Generar la contraseña segura
 	password, err := security.GenerateSecurePassword(length, useUpper, useLower, useNumbers, useSpecials)
 	if err != nil {
 		t.Fatalf("Error al generar la contraseña segura: %v", err)
 	}
 
-	// Verificar que la contraseña tenga la longitud correcta
 	if len(password) != length {
 		t.Fatalf("La longitud de la contraseña debería ser %d, pero obtuvo %d", length, len(password))
 	}
@@ -93,7 +131,7 @@ func TestGenerateSecurePassword(t *testing.T) {
 		!containsCharacterSet(password, useLower, lowerSet) ||
 		!containsCharacterSet(password, useNumbers, numberSet) ||
 		!containsCharacterSet(password, useSpecials, specialSet) {
-		t.Fatal("La contraseña generada no contiene los conjuntos de caracteres esperados")
+		t.Error("La contraseña generada no contiene los conjuntos de caracteres esperados")
 	}
 }
 

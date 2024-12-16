@@ -85,11 +85,20 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 		selectFolder.Selected = selectedFolder
 		selectFolder.Disable()
 
-		encryption := []string{"AES"}
-		selectEncryption := widget.NewSelect(encryption, func(selected string) {
-			fmt.Println("Selected:", selected)
-		})
-		selectEncryption.Selected = "AES"
+		encryption, err := dbController.GetAllEncrypted()
+		if err != nil {
+			log.Fatal(err)
+		}
+		var encryptionKeys []string
+		var selectedEncryption string
+		for encryptionName, encryptionID := range encryption {
+			if fmt.Sprintf("%v", encryptionID) == password["encrypted_id"] {
+				selectedEncryption = encryptionName
+			}
+			encryptionKeys = append(encryptionKeys, encryptionName)
+		}
+		selectEncryption := widget.NewSelect(encryptionKeys, func(selected string) { fmt.Println("Selected:", selected) })
+		selectEncryption.Selected = selectedEncryption
 		selectEncryption.Disable()
 
 		note := widget.NewMultiLineEntry()
@@ -156,8 +165,9 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			if _, ok := folders[selectFolder.Selected]; ok {
 				updatedPassword["folder_id"] = fmt.Sprintf("%v", folders[selectFolder.Selected])
 			}
-
-			updatedPassword["encrypted"] = selectEncryption.Selected
+			if _, ok := folders[selectFolder.Selected]; ok {
+				updatedPassword["encrypted_id"] = fmt.Sprintf("%v", encryption[selectEncryption.Selected])
+			}
 			updatedPassword["note"] = note.Text
 
 			for key, value := range updatedPassword {

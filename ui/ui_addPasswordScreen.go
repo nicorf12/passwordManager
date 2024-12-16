@@ -74,21 +74,24 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		var folderKeys []string
 		for folderName := range folders {
 			folderKeys = append(folderKeys, folderName)
 		}
+		selectFolder := widget.NewSelect(folderKeys, func(selected string) { fmt.Println("Selected:", selected) })
 
-		selectFolder := widget.NewSelect(folderKeys, func(selected string) {
-			fmt.Println("Selected:", selected)
-		})
-
-		encryption := []string{"AES"}
-		selectEncryption := widget.NewSelect(encryption, func(selected string) {
-			fmt.Println("Selected:", selected)
-		})
-		selectEncryption.Selected = "AES"
+		encryption, err := dbController.GetAllEncrypted()
+		if err != nil {
+			log.Fatal(err)
+		}
+		var encryptionKeys []string
+		for encryptionName := range encryption {
+			encryptionKeys = append(encryptionKeys, encryptionName)
+		}
+		selectEncryption := widget.NewSelect(encryptionKeys, func(selected string) { fmt.Println("Selected:", selected) })
+		if len(encryptionKeys) > 0 {
+			selectEncryption.Selected = encryptionKeys[0]
+		}
 
 		note := widget.NewMultiLineEntry()
 
@@ -99,7 +102,20 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			if _, ok := folders[selectFolder.Selected]; ok {
 				idFolder = folders[selectFolder.Selected]
 			}
-			_, err := dbController.InsertPassword(contUser.GetCurrentUserId(), idFolder, labelEntry.Text, nameEntry.Text, passwordEntry.Text, websiteEntry.Text, note.Text, selectEncryption.Selected, contUser.GetCurrentUserPassword())
+			var idEncryption int64
+			if _, ok := encryption[selectEncryption.Selected]; ok {
+				idEncryption = encryption[selectEncryption.Selected]
+			}
+			_, err := dbController.InsertPassword(
+				contUser.GetCurrentUserId(),
+				idFolder,
+				labelEntry.Text,
+				nameEntry.Text,
+				passwordEntry.Text,
+				websiteEntry.Text,
+				note.Text,
+				idEncryption,
+				contUser.GetCurrentUserPassword())
 			if err != nil {
 				labelErr.Show()
 				log.Println("Err in add: ", err)

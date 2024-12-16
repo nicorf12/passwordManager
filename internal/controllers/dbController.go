@@ -7,8 +7,27 @@ import (
 	_ "modernc.org/sqlite" // Importa el driver de SQLite
 	"password_manager/internal/models"
 	"password_manager/security"
+	"strconv"
 	"strings"
 )
+
+var encryptionMethods = map[int64]struct {
+	Encrypt func([]byte, string) (string, error)
+	Decrypt func(string, string) (string, error)
+}{
+	1: { // AES-256
+		Encrypt: security.EncryptAES,
+		Decrypt: security.DecryptAES,
+	},
+	2: { // XChaCha20-Poly1305
+		Encrypt: security.EncryptXChaCha20Poly1305,
+		Decrypt: security.DecryptXChaCha20Poly1305,
+	},
+	3: { // DES
+		Encrypt: security.EncryptDES,
+		Decrypt: security.DecryptDES,
+	},
+}
 
 // Estructura para el controlador de la base de datos
 type DBController struct {
@@ -39,17 +58,30 @@ func NewDBController() (*DBController, error) {
 			password TEXT NOT NULL,
 			website TEXT,
 			note TEXT,
-			encrypted TEXT NOT NULL,
+			encrypted_id INTEGER NOT NULL,
 			last_update DATETIME DEFAULT CURRENT_TIMESTAMP,
 			is_favorite INTEGER DEFAULT 0,
 			FOREIGN KEY(user_id) REFERENCES users(id),
-			FOREIGN KEY(folder_id) REFERENCES folders(id)
+			FOREIGN KEY(folder_id) REFERENCES folders(id),
+		    FOREIGN KEY(encrypted_id) REFERENCES encrypted(id)
 		);
 	
 		CREATE TABLE IF NOT EXISTS folders (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL
 		);
+
+		CREATE TABLE IF NOT EXISTS encrypted (
+		    id INTEGER PRIMARY KEY AUTOINCREMENT,
+		    name TEXT NOT NULL
+		);
+
+		INSERT INTO encrypted (name)
+		SELECT 'AES-256' WHERE NOT EXISTS (SELECT 1 FROM encrypted WHERE name = 'AES-256');
+		INSERT INTO encrypted (name)
+		SELECT 'XChaCha20-Poly1305' WHERE NOT EXISTS (SELECT 1 FROM encrypted WHERE name = 'XChaCha20-Poly1305');
+		INSERT INTO encrypted (name)
+		SELECT 'DES' WHERE NOT EXISTS (SELECT 1 FROM encrypted WHERE name = 'DES');
 	`)
 
 	if err != nil {
@@ -87,18 +119,23 @@ func (db *DBController) InsertUser(email, password string) (int64, error) {
 }
 
 // Inserta una nueva contraseña para un usuario
-func (db *DBController) InsertPassword(userID int64, folderID int64, label, name, password, website, note, encrypted string, userPassword string) (int64, error) {
+func (db *DBController) InsertPassword(userID int64, folderID int64, label, name, password, website, note string, encryptedID int64, userPassword string) (int64, error) {
 	if len(password) < 8 {
 		return 0, fmt.Errorf("Password must be at least 8 characters")
 	}
 
-	encryptedPassword, err := security.Encrypt([]byte(password), userPassword)
+	encryptionMethod, exists := encryptionMethods[encryptedID]
+	if !exists {
+		return 0, fmt.Errorf("Unsupported encryption method")
+	}
+
+	encryptedPassword, err := encryptionMethod.Encrypt([]byte(password), userPassword)
 	if err != nil {
 		return 0, fmt.Errorf("Error encrypting password: %v", err)
 	}
 
 	fmt.Println("Saving password")
-	result, err := db.DB.Exec("INSERT INTO passwords (user_id, folder_id,label, name, password, website, note, encrypted) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userID, folderID, label, name, encryptedPassword, website, note, encrypted)
+	result, err := db.DB.Exec("INSERT INTO passwords (user_id, folder_id,label, name, password, website, note, encrypted_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userID, folderID, label, name, encryptedPassword, website, note, encryptedID)
 	if err != nil {
 		return 0, fmt.Errorf("Error inserting password: %v", err)
 	}
@@ -129,14 +166,14 @@ func (db *DBController) GetUserByID(userID int64) (string, string, error) {
 	row := db.DB.QueryRow("SELECT email, password FROM users WHERE id = ?", userID)
 	var email, password string
 	if err := row.Scan(&email, &password); err != nil {
-		return "", "", fmt.Errorf("Error getting user: %v", err)
+		return "", "", fmt.Errorf("error getting user: %v", err)
 	}
 	return email, password, nil
 }
 
 // Obtiene todas las contraseñas de un usuario por su ID
 func (db *DBController) GetPasswordsByUserID(userID int64, userPassword string) ([]map[string]string, error) {
-	rows, err := db.DB.Query("SELECT id,folder_id,label,name,password,website,note,encrypted,last_update,is_favorite FROM passwords WHERE user_id = ?", userID)
+	rows, err := db.DB.Query("SELECT id,folder_id,label,name,password,website,note,encrypted_id,last_update,is_favorite FROM passwords WHERE user_id = ?", userID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting passwords: %v", err)
 	}
@@ -144,24 +181,30 @@ func (db *DBController) GetPasswordsByUserID(userID int64, userPassword string) 
 
 	var passwords []map[string]string
 	for rows.Next() {
-		var id, folderId int64
-		var label, name, password, website, note, encrypted, lastUpdate string
+		var id, folderId, encryptedId int64
+		var label, name, password, website, note, lastUpdate string
 		var isFavorite int
-		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encrypted, &lastUpdate, &isFavorite); err != nil {
+		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encryptedId, &lastUpdate, &isFavorite); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
-		decryptPassword, _ := security.Decrypt(password, userPassword)
+
+		encryptionMethod, exists := encryptionMethods[encryptedId]
+		if !exists {
+			return nil, fmt.Errorf("Unsupported encryption method")
+		}
+
+		decryptedPassword, _ := encryptionMethod.Decrypt(password, userPassword)
 		passwords = append(passwords, map[string]string{
-			"id":          fmt.Sprintf("%d", id),
-			"folder_id":   fmt.Sprintf("%d", folderId),
-			"label":       label,
-			"name":        name,
-			"password":    decryptPassword,
-			"website":     website,
-			"note":        note,
-			"encrypted":   encrypted,
-			"last_update": lastUpdate,
-			"is_favorite": fmt.Sprintf("%d", isFavorite),
+			"id":           fmt.Sprintf("%d", id),
+			"folder_id":    fmt.Sprintf("%d", folderId),
+			"label":        label,
+			"name":         name,
+			"password":     decryptedPassword,
+			"website":      website,
+			"note":         note,
+			"encrypted_id": strconv.FormatInt(encryptedId, 10),
+			"last_update":  lastUpdate,
+			"is_favorite":  fmt.Sprintf("%d", isFavorite),
 		})
 	}
 	if err := rows.Err(); err != nil {
@@ -212,9 +255,34 @@ func (db *DBController) GetAllFolders() (map[string]int64, error) {
 	return folders, nil
 }
 
+func (db *DBController) GetAllEncrypted() (map[string]int64, error) {
+	rows, err := db.DB.Query("SELECT id, name FROM encrypted")
+	if err != nil {
+		return nil, fmt.Errorf("error fetching encrypted types: %v", err)
+	}
+	defer rows.Close()
+
+	encrypted := make(map[string]int64)
+
+	for rows.Next() {
+		var id int64
+		var name string
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, fmt.Errorf("error scanning encrypted record: %v", err)
+		}
+		encrypted[name] = id
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	return encrypted, nil
+}
+
 // Obtiene todas las contraseñas de un usuario para una carpeta específica
 func (db *DBController) GetPasswordsByFolderAndUserID(userID int64, folderID int64, userPassword string) ([]map[string]string, error) {
-	rows, err := db.DB.Query("SELECT id, folder_id, label, name, password, website, note, encrypted, last_update, is_favorite FROM passwords WHERE user_id = ? AND folder_id = ?", userID, folderID)
+	rows, err := db.DB.Query("SELECT id, folder_id, label, name, password, website, note, encrypted_id, last_update, is_favorite FROM passwords WHERE user_id = ? AND folder_id = ?", userID, folderID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting passwords by folder and user: %v", err)
 	}
@@ -222,25 +290,30 @@ func (db *DBController) GetPasswordsByFolderAndUserID(userID int64, folderID int
 
 	var passwords []map[string]string
 	for rows.Next() {
-		var id, folderId int64
-		var label, name, password, website, note, encrypted, lastUpdate string
+		var id, folderId, encryptedId int64
+		var label, name, password, website, note, lastUpdate string
 		var isFavorite int
-		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encrypted, &lastUpdate, &isFavorite); err != nil {
+		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encryptedId, &lastUpdate, &isFavorite); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		decryptPassword, _ := security.Decrypt(password, userPassword)
+		encryptionMethod, exists := encryptionMethods[encryptedId]
+		if !exists {
+			return nil, fmt.Errorf("unsupported encryption method")
+		}
+
+		decryptedPassword, _ := encryptionMethod.Decrypt(password, userPassword)
 		passwords = append(passwords, map[string]string{
-			"id":          fmt.Sprintf("%d", id),
-			"folder_id":   fmt.Sprintf("%d", folderId),
-			"label":       label,
-			"name":        name,
-			"password":    decryptPassword,
-			"website":     website,
-			"note":        note,
-			"encrypted":   encrypted,
-			"last_update": lastUpdate,
-			"is_favorite": fmt.Sprintf("%d", isFavorite),
+			"id":           fmt.Sprintf("%d", id),
+			"folder_id":    fmt.Sprintf("%d", folderId),
+			"label":        label,
+			"name":         name,
+			"password":     decryptedPassword,
+			"website":      website,
+			"note":         note,
+			"encrypted_id": fmt.Sprintf("%d", encryptedId),
+			"last_update":  lastUpdate,
+			"is_favorite":  fmt.Sprintf("%d", isFavorite),
 		})
 	}
 	if err := rows.Err(); err != nil {
@@ -251,7 +324,7 @@ func (db *DBController) GetPasswordsByFolderAndUserID(userID int64, folderID int
 
 // Obtiene todas las contraseñas marcadas como favoritas de un usuario por su ID
 func (db *DBController) GetPasswordsByFavoriteAndUserID(userID int64, userPassword string) ([]map[string]string, error) {
-	rows, err := db.DB.Query("SELECT id, folder_id, label, name, password, website, note, encrypted, last_update, is_favorite FROM passwords WHERE user_id = ? AND is_favorite = 1", userID)
+	rows, err := db.DB.Query("SELECT id, folder_id, label, name, password, website, note, encrypted_id, last_update, is_favorite FROM passwords WHERE user_id = ? AND is_favorite = 1", userID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting favorite passwords by user: %v", err)
 	}
@@ -259,23 +332,28 @@ func (db *DBController) GetPasswordsByFavoriteAndUserID(userID int64, userPasswo
 
 	var passwords []map[string]string
 	for rows.Next() {
-		var id, folderId int64
-		var label, name, password, website, note, encrypted, lastUpdate string
+		var id, folderId, encryptedId int64
+		var label, name, password, website, note, lastUpdate string
 		var isFavorite int
-		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encrypted, &lastUpdate, &isFavorite); err != nil {
+		if err := rows.Scan(&id, &folderId, &label, &name, &password, &website, &note, &encryptedId, &lastUpdate, &isFavorite); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		decryptPassword, _ := security.Decrypt(password, userPassword)
+		encryptionMethod, exists := encryptionMethods[encryptedId]
+		if !exists {
+			return nil, fmt.Errorf("unsupported encryption method")
+		}
+
+		decryptedPassword, _ := encryptionMethod.Decrypt(password, userPassword)
 		passwords = append(passwords, map[string]string{
 			"id":          fmt.Sprintf("%d", id),
 			"folder_id":   fmt.Sprintf("%d", folderId),
 			"label":       label,
 			"name":        name,
-			"password":    decryptPassword,
+			"password":    decryptedPassword,
 			"website":     website,
 			"note":        note,
-			"encrypted":   encrypted,
+			"encrypted":   fmt.Sprintf("%d", encryptedId),
 			"last_update": lastUpdate,
 			"is_favorite": fmt.Sprintf("%d", isFavorite),
 		})
@@ -328,19 +406,22 @@ func (db *DBController) DeleteFolder(folderID int64) error {
 
 // Actualiza la contraseña en la base de datos
 func (db *DBController) EditPassword(passwordID int64, updates map[string]interface{}, userPassword string) error {
-	// Iniciar una lista para los valores y una lista para las columnas
 	var setClauses []string
 	var args []interface{}
 
-	// Si se incluye el campo 'password', encriptarlo y agregarlo al mapa
 	if newPassword, ok := updates["password"]; ok {
 		if len(newPassword.(string)) < 8 {
-			return fmt.Errorf("Password must be at least 8 characters")
+			return fmt.Errorf("password must be at least 8 characters")
 		}
 
-		encryptedPassword, err := security.Encrypt([]byte(newPassword.(string)), userPassword)
+		encryptionMethod, exists := encryptionMethods[updates["encrypted_id"].(int64)]
+		if !exists {
+			return fmt.Errorf("unsupported encryption method")
+		}
+
+		encryptedPassword, err := encryptionMethod.Encrypt([]byte(newPassword.(string)), userPassword)
 		if err != nil {
-			return fmt.Errorf("Error encrypting password: %v", err)
+			return fmt.Errorf("error encrypting password: %v", err)
 		}
 
 		setClauses = append(setClauses, "password = ?")
