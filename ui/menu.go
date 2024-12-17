@@ -55,7 +55,7 @@ func menu(controller *controllers.ControllerScreen, contUser *controllers.Contro
 	)
 
 	folderNameEntry := widget.NewEntry()
-	folderNameEntry.SetPlaceHolder(localizer.Get("folder name"))
+	folderNameEntry.SetPlaceHolder(localizer.Get("folderName"))
 	folderNameEntry.Hide()
 
 	confirmAddButton = widget.NewButtonWithIcon("", theme.ConfirmIcon(), func() {
@@ -64,10 +64,27 @@ func menu(controller *controllers.ControllerScreen, contUser *controllers.Contro
 			return
 		}
 
-		newFolderButton := widget.NewButtonWithIcon(folderNameEntry.Text, theme.FolderIcon(), func() {
-			controller.ShowScreen("folder", folderNameEntry.Text)
-		})
-		categories.Add(newFolderButton)
+		folders, err := dbController.GetAllFolders()
+		if err != nil {
+			log.Println("Error fetching folders:", err)
+			return
+		}
+
+		categories.Objects = nil
+		var folderKeys []string
+		for name := range folders {
+			folderKeys = append(folderKeys, name)
+		}
+
+		sort.Strings(folderKeys)
+
+		for _, name := range folderKeys {
+			folderButton := widget.NewButtonWithIcon(name, theme.FolderIcon(), func() {
+				controller.ShowScreen("folder", name, folders[name])
+			})
+			categories.Add(folderButton)
+		}
+
 		categories.Refresh()
 
 		addCategoryButton.Show()
@@ -76,6 +93,7 @@ func menu(controller *controllers.ControllerScreen, contUser *controllers.Contro
 		folderNameEntry.Hide()
 		folderNameEntry.SetText("")
 	})
+
 	confirmAddButton.Hide()
 
 	cancelAddButton = widget.NewButtonWithIcon("", theme.CancelIcon(), func() {

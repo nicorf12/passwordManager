@@ -10,6 +10,7 @@ import (
 	"password_manager/internal/controllers"
 	"password_manager/localization"
 	"strconv"
+	"time"
 )
 
 func showViewScreen(controller *controllers.ControllerScreen, contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) controllers.Screen {
@@ -139,6 +140,11 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 		})
 
 		editButton = widget.NewButton(localizer.Get("edit"), func() {
+			if !isVisible {
+				passwordEntry.SetText(password["password"])
+				showHideButton.SetIcon(theme.VisibilityOffIcon())
+				isVisible = !isVisible
+			}
 			labelEntry.Enable()
 			nameEntry.Enable()
 			passwordEntry.Enable()
@@ -148,6 +154,7 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			note.Enable()
 			editButton.Hide()
 			returnButton.Hide()
+			showHideButton.Hide()
 			saveButton.Show()
 			cancelButton.Show()
 		})
@@ -161,12 +168,14 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 
 			if passwordEntry.Text != "" {
 				updatedPassword["password"] = passwordEntry.Text
+			} else {
+				updatedPassword["password"] = password["password"]
 			}
 			if _, ok := folders[selectFolder.Selected]; ok {
 				updatedPassword["folder_id"] = fmt.Sprintf("%v", folders[selectFolder.Selected])
 			}
-			if _, ok := folders[selectFolder.Selected]; ok {
-				updatedPassword["encrypted_id"] = fmt.Sprintf("%v", encryption[selectEncryption.Selected])
+			if _, ok := encryption[selectEncryption.Selected]; ok {
+				updatedPassword["encrypted_id"] = encryption[selectEncryption.Selected]
 			}
 			updatedPassword["note"] = note.Text
 
@@ -196,20 +205,46 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			note.Disable()
 			editButton.Show()
 			returnButton.Show()
+			showHideButton.Show()
 			saveButton.Hide()
 			cancelButton.Hide()
 		})
 		saveButton.Hide()
 
 		cancelButton = widget.NewButton(localizer.Get("cancel"), func() {
+			labelEntry.Disable()
+			nameEntry.Disable()
+			passwordEntry.Disable()
+			websiteEntry.Disable()
+			selectFolder.Disable()
+			selectEncryption.Disable()
+			note.Disable()
 			editButton.Show()
 			returnButton.Show()
+			showHideButton.Show()
 			saveButton.Hide()
 			cancelButton.Hide()
 		})
 		cancelButton.Hide()
 
-		w.SetContent(container.NewVBox(
+		securityLevel := widget.NewProgressBar()
+		securityLevel.Min = 0
+		securityLevel.Max = 100
+		securityLevel.Hide()
+		evaluateButton := widget.NewButton(localizer.Get("evaluate"), func() {
+			if passwordEntry.Text == "" {
+				securityLevel.SetValue(contUser.GetPasswordSecurityLevel(password["password"]))
+			} else {
+				securityLevel.SetValue(contUser.GetPasswordSecurityLevel(passwordEntry.Text))
+			}
+			go func() {
+				securityLevel.Show()
+				time.Sleep(3 * time.Second)
+				securityLevel.Hide()
+			}()
+		})
+
+		content := container.NewVBox(
 			container.NewHBox(viewTitle, returnButton, deleteButton),
 			passwordLabel,
 			labelEntry,
@@ -217,6 +252,7 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			nameEntry,
 			container.NewHBox(passwordPassword, showHideButton),
 			passwordEntry,
+			container.NewGridWithColumns(2, evaluateButton, securityLevel),
 			passwordWebsite,
 			websiteEntry,
 			passwordFolder,
@@ -228,6 +264,10 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			editButton,
 			saveButton,
 			cancelButton,
-		))
+		)
+
+		scrollContent := container.NewScroll(content)
+
+		w.SetContent(scrollContent)
 	}
 }

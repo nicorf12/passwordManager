@@ -97,3 +97,8 @@ func (c *ControllerUser) GenerateNewPasswordSafe(length int, useUpper, useLower,
 	}
 	return password, nil
 }
+
+// GetPasswordSecurityLevel calcula el nivel de seguridad de una contraseña del 1 al 100
+func (c *ControllerUser) GetPasswordSecurityLevel(password string) float64 {
+	return security.CalculatePasswordSecurity(password)
+}

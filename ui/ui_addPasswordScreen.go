@@ -128,6 +128,15 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			}
 		})
 
+		securityLevel := widget.NewProgressBar()
+		securityLevel.Min = 0
+		securityLevel.Max = 100
+		evaluateButton := widget.NewButton(localizer.Get("evaluate"), func() {
+			securityLevel.SetValue(contUser.GetPasswordSecurityLevel(passwordEntry.Text))
+		})
+		evaluateButton.Hide()
+		securityLevel.Hide()
+
 		var OptionsButton *widget.Button
 		OptionsButton = widget.NewButtonWithIcon("", theme.MenuDropDownIcon(), func() {
 			if viewOptiones {
@@ -137,6 +146,8 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 				useNumbersCheck.Show()
 				useSpecialsCheck.Show()
 				generateButton.Show()
+				evaluateButton.Show()
+				securityLevel.Show()
 				OptionsButton.SetIcon(theme.MenuDropUpIcon())
 			} else {
 				lengthEntry.Hide()
@@ -145,6 +156,8 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 				useNumbersCheck.Hide()
 				useSpecialsCheck.Hide()
 				generateButton.Hide()
+				evaluateButton.Hide()
+				securityLevel.Hide()
 				OptionsButton.SetIcon(theme.MenuDropDownIcon())
 			}
 			viewOptiones = !viewOptiones
@@ -166,6 +179,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			useNumbersCheck,
 			useSpecialsCheck,
 			generateButton,
+			container.NewGridWithColumns(2, securityLevel, evaluateButton),
 			OptionsButton,
 			passwordWebsite,
 			websiteEntry,

@@ -190,10 +190,13 @@ func (db *DBController) GetPasswordsByUserID(userID int64, userPassword string) 
 
 		encryptionMethod, exists := encryptionMethods[encryptedId]
 		if !exists {
-			return nil, fmt.Errorf("Unsupported encryption method")
+			return nil, fmt.Errorf("unsupported encryption method")
 		}
 
-		decryptedPassword, _ := encryptionMethod.Decrypt(password, userPassword)
+		decryptedPassword, err := encryptionMethod.Decrypt(password, userPassword)
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting password: %v", err)
+		}
 		passwords = append(passwords, map[string]string{
 			"id":           fmt.Sprintf("%d", id),
 			"folder_id":    fmt.Sprintf("%d", folderId),

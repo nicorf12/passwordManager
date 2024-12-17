@@ -106,7 +106,7 @@ func DecryptXChaCha20Poly1305(encoded string, key string) (string, error) {
 
 	nonce := ciphertext[:chacha20poly1305.NonceSizeX]
 	ciphertext = ciphertext[chacha20poly1305.NonceSizeX:]
-	
+
 	plaintext, err := aead.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return "", fmt.Errorf("error desencriptando: %v", err)
@@ -117,8 +117,13 @@ func DecryptXChaCha20Poly1305(encoded string, key string) (string, error) {
 
 // EncryptDES encripta usando DES
 func EncryptDES(data []byte, key string) (string, error) {
-	// Convertimos la clave de string a []byte
-	keyBytes := []byte(key)
+	keyBytes, _ := generateKeyFromPassword(key)
+	if len(keyBytes) < des.BlockSize {
+		return "", fmt.Errorf("clave demasiado corta")
+	}
+	
+	keyBytes = keyBytes[:des.BlockSize]
+
 	block, err := des.NewCipher(keyBytes)
 	if err != nil {
 		return "", fmt.Errorf("error creando cifrador DES: %v", err)
@@ -142,7 +147,13 @@ func DecryptDES(encoded string, key string) (string, error) {
 		return "", fmt.Errorf("error decodificando: %v", err)
 	}
 
-	keyBytes := []byte(key)
+	keyBytes, _ := generateKeyFromPassword(key)
+	if len(keyBytes) < des.BlockSize {
+		return "", fmt.Errorf("clave demasiado corta")
+	}
+
+	keyBytes = keyBytes[:des.BlockSize]
+
 	block, err := des.NewCipher(keyBytes)
 	if err != nil {
 		return "", fmt.Errorf("error creando cifrador DES: %v", err)

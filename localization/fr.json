@@ -39,5 +39,7 @@
   "note": "Note",
   "edite": "Modifier",
   "hereCanSeeFavoritesPasswords": "Ici, vous pouvez voir vos mots de passe favoris",
-  "folderName": "Nom du Dossier"
+  "folderName": "Nom du Dossier",
+  "evaluate": "Évaluer le niveau de sécurité",
+  "edit": "Modifier"
 }

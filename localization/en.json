@@ -39,5 +39,7 @@
   "note": "Note",
   "edite": "Edit",
   "hereCanSeeFavoritesPasswords": "Here you can see your favorite passwords",
-  "folderName": "Folder Name"
+  "folderName": "Folder Name",
+  "evaluate": "Evaluate security level",
+  "edit": "Edit"
 }
