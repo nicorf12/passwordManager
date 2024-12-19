@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
 	"strings"
@@ -83,19 +84,43 @@ var TwitterIcon = &fyne.StaticResource{
 		</svg>`),
 }
 
+var mapStringColors = map[string]string{
+	"Dark":  "#FFFFFF",
+	"Light": "#000000",
+	"Blue":  "#267AB6",
+	"Pink":  "#E86EC1",
+}
+
 // Función que devuelve el ícono adecuado en función del tema
-func GetIconForPassword(passwordDetails map[string]string, isDarkTheme bool) fyne.Resource {
+func GetIconForPassword(passwordDetails map[string]string, t string) fyne.Resource {
 	label := passwordDetails["label"]
+	color, exists := mapStringColors[t]
+	if !exists {
+		color = "#FFFFFF"
+	}
+
+	var svgContent []byte
 	switch {
 	case containsIgnoreCase(label, "facebook"):
-		return FacebookIcon
+		svgContent = setSVGFill(FacebookIcon.StaticContent, color)
 	case containsIgnoreCase(label, "twitter"):
-		return TwitterIcon
+		svgContent = setSVGFill(TwitterIcon.StaticContent, color)
 	case containsIgnoreCase(label, "gmail"):
-		return GmailIcon
+		svgContent = setSVGFill(GmailIcon.StaticContent, color)
 	default:
 		return theme.FileIcon()
 	}
+
+	return &fyne.StaticResource{
+		StaticName:    label + "_icon.svg",
+		StaticContent: svgContent,
+	}
+}
+
+func setSVGFill(svg []byte, color string) []byte {
+	svgString := string(svg)
+	updatedSVG := strings.ReplaceAll(svgString, `fill="#ffffff"`, fmt.Sprintf(`fill="%s"`, color))
+	return []byte(updatedSVG)
 }
 
 func containsIgnoreCase(label string, keyword string) bool {

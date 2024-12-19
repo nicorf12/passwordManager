@@ -22,9 +22,9 @@ func showFavoritesScreen(controller *controllers.ControllerScreen, contUser *con
 				log.Printf("Error getting passwords: %v", err)
 			} else {
 				passwords.Objects = nil
+				_, t := contUser.GetConfig()
 				for _, password := range passwordsData {
-
-					passwords.Add(createPasswordItem(w, controller, dbController, password, "favorites", nil, nil, true))
+					passwords.Add(createPasswordItem(w, controller, dbController, t, password, "favorites", nil, nil))
 				}
 			}
 		}

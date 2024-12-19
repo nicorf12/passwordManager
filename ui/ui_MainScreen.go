@@ -29,9 +29,9 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 				log.Printf("Error getting passwords: %v", err)
 			} else {
 				passwords.Objects = nil
+				_, t := contUser.GetConfig()
 				for _, password := range passwordsData {
-
-					passwords.Add(createPasswordItem(w, controller, dbController, password, "main", nil, nil, true))
+					passwords.Add(createPasswordItem(w, controller, dbController, t, password, "main", nil, nil))
 				}
 			}
 		}
@@ -48,8 +48,8 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 	}
 }
 
-func createPasswordItem(w fyne.Window, controller *controllers.ControllerScreen, dbController *controllers.DBController, passwordDetails map[string]string, returnScreen string, folderName *string, folderId *int64, isDarkTheme bool) fyne.CanvasObject {
-	icon := GetIconForPassword(passwordDetails, isDarkTheme)
+func createPasswordItem(w fyne.Window, controller *controllers.ControllerScreen, dbController *controllers.DBController, t string, passwordDetails map[string]string, returnScreen string, folderName *string, folderId *int64) fyne.CanvasObject {
+	icon := GetIconForPassword(passwordDetails, t)
 	iconWidget := widget.NewIcon(icon)
 	iconWidget.Resize(fyne.NewSize(60, 60))
 	iconContainer := container.New(

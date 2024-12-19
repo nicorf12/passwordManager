@@ -36,8 +36,9 @@ func showFolderScreen(controller *controllers.ControllerScreen, contUser *contro
 				log.Printf("Error getting passwords: %v", err)
 			} else {
 				passwords.Objects = nil
+				_, t := contUser.GetConfig()
 				for _, password := range passwordsData {
-					passwords.Add(createPasswordItem(w, controller, dbController, password, "folder", &name, &folderId, true))
+					passwords.Add(createPasswordItem(w, controller, dbController, t, password, "folder", &name, &folderId))
 				}
 			}
 		}
