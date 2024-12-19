@@ -42,5 +42,7 @@
   "folderName": "Nombre de la carpeta",
   "evaluate": "Evaluar nivel de seguridad",
   "edit": "Editar",
-  "quit": "Salir"
+  "quit": "Salir",
+  "save": "Guardar",
+  "open": "Abrir"
 }
