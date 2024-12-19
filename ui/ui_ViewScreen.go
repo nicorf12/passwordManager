@@ -243,6 +243,7 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 				securityLevel.Hide()
 			}()
 		})
+		securityLevel.Hide()
 
 		content := container.NewVBox(
 			container.NewHBox(viewTitle, returnButton, deleteButton),
