@@ -21,6 +21,9 @@ func (c CustomLightTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 		return color.Black
 	case theme.ColorNameButton:
 		return transparent
+	case theme.ColorNamePrimary:
+
+		return softButtonColorBlue
 	default:
 		return theme.LightTheme().Color(name, variant)
 	}

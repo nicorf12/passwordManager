@@ -27,11 +27,13 @@ func (c CustomBlueTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVaria
 	case theme.ColorNameFocus:
 		return white
 	case theme.ColorNameHover:
-		return color.RGBA{R: 119, G: 115, B: 236, A: 255}
+		return color.RGBA{R: 128, G: 153, B: 244, A: 255}
 	case theme.ColorNameInputBorder:
 		return blue
 	case theme.ColorNamePlaceHolder:
-		return color.RGBA{R: 119, G: 115, B: 236, A: 255}
+		return color.RGBA{R: 128, G: 153, B: 244, A: 255}
+	case theme.ColorNamePrimary:
+		return blue
 	default:
 		return theme.LightTheme().Color(name, variant)
 	}

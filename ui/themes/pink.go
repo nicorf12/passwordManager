@@ -32,6 +32,8 @@ func (c CustomPinkTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVaria
 		return pink
 	case theme.ColorNamePlaceHolder:
 		return color.RGBA{R: 219, G: 112, B: 147, A: 255}
+	case theme.ColorNamePrimary:
+		return pink
 	default:
 		return theme.LightTheme().Color(name, variant)
 	}

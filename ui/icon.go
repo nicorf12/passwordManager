@@ -85,8 +85,8 @@ var TwitterIcon = &fyne.StaticResource{
 }
 
 var mapStringColors = map[string]string{
-	"Dark":  "#FFFFFF",
-	"Light": "#000000",
+	"Dark":  "#87CEFA",
+	"Light": "#87CEFA",
 	"Blue":  "#267AB6",
 	"Pink":  "#E86EC1",
 }

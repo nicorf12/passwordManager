@@ -20,6 +20,9 @@ func (c CustomDarkTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVaria
 		return buttonBlue
 	case theme.ColorNameDisabled:
 		return disabledLightBlue
+	case theme.ColorNamePrimary:
+
+		return softButtonColorBlue
 	default:
 		return theme.DarkTheme().Color(name, variant)
 	}
