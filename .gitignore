@@ -14,8 +14,7 @@ db/
 db
 tmp/
 tmp
-docs
-docs/
+docs/bdd.drawio
 
 # Caché del módulo Go
 /go/pkg/mod/
