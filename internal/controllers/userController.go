@@ -102,3 +102,10 @@ func (c *ControllerUser) GenerateNewPasswordSafe(length int, useUpper, useLower,
 func (c *ControllerUser) GetPasswordSecurityLevel(password string) float64 {
 	return security.CalculatePasswordSecurity(password)
 }
+
+func (c *ControllerUser) SomeoneLoggedIn() bool {
+	if c.currentUser == nil {
+		return false
+	}
+	return true
+}

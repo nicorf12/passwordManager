@@ -41,5 +41,6 @@
   "hereCanSeeFavoritesPasswords": "Here you can see your favorite passwords",
   "folderName": "Folder Name",
   "evaluate": "Evaluate security level",
-  "edit": "Edit"
+  "edit": "Edit",
+  "quit": "Quit"
 }

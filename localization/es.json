@@ -41,5 +41,6 @@
   "hereCanSeeFavoritesPasswords": "Aquí puedes ver tus contraseñas favoritas",
   "folderName": "Nombre de la carpeta",
   "evaluate": "Evaluar nivel de seguridad",
-  "edit": "Editar"
+  "edit": "Editar",
+  "quit": "Salir"
 }
