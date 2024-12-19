@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"password_manager/internal/models"
 	"password_manager/security"
 )
@@ -21,13 +22,30 @@ func NewControllerUser(dbC *DBController) *ControllerUser {
 }
 
 // NewControllerUser crea e inicializa una instancia de ControllerUser.
-func NewControllerUserWithSession(dbC *DBController, id int64, email string, password string) *ControllerUser {
-	user, _ := models.NewUser(email, password)
+func NewControllerUserWithSession(dbC *DBController, id int64, email string, password string) (*ControllerUser, error) {
+	storedEmail, storedPassword, _, err := dbC.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if storedEmail != email {
+		return nil, errors.New("invalid email")
+	}
+
+	if storedPassword != password {
+		return nil, errors.New("invalid password")
+	}
+
+	user, err := models.NewUser(email, password)
+	if err != nil {
+		return nil, fmt.Errorf("error creando el usuario: %v", err)
+	}
+
 	user.SetID(id)
 	return &ControllerUser{
 		dbController: dbC,
 		currentUser:  user,
-	}
+	}, nil
 }
 
 // Login valida las credenciales y establece el usuario actual si son correctas.
@@ -39,7 +57,7 @@ func (c *ControllerUser) Login(email, password string) error {
 
 	passwordHashed := security.GenerateHash(password, salt)
 	if storedPassword != passwordHashed {
-		return errors.New("Incorrect credentials")
+		return errors.New("incorrect credentials")
 	}
 
 	c.currentUser, err = models.NewUser(email, passwordHashed)

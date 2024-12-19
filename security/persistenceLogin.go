@@ -2,6 +2,7 @@ package security
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -37,6 +38,9 @@ func LoadSession() (*SessionData, error) {
 	if err := json.NewDecoder(file).Decode(&data); err != nil {
 		return nil, err
 	}
+
+	fmt.Println(data)
+
 	return &data, nil
 }
 

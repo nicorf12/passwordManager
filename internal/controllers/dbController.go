@@ -162,13 +162,17 @@ func (db *DBController) InsertFolder(name string) (int64, error) {
 }
 
 // Obtiene un usuario por su ID
-func (db *DBController) GetUserByID(userID int64) (string, string, error) {
-	row := db.DB.QueryRow("SELECT email, password FROM users WHERE id = ?", userID)
-	var email, password string
-	if err := row.Scan(&email, &password); err != nil {
-		return "", "", fmt.Errorf("error getting user: %v", err)
+func (db *DBController) GetUserByID(userID int64) (string, string, []byte, error) {
+	row := db.DB.QueryRow("SELECT email, password, salt FROM users WHERE id = ?", userID)
+	var email, password, saltBase64 string
+	if err := row.Scan(&email, &password, &saltBase64); err != nil {
+		return "", "", nil, fmt.Errorf("error getting user: %v", err)
 	}
-	return email, password, nil
+	salt, err := base64.StdEncoding.DecodeString(saltBase64)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("Error decoding the salt: %v", err)
+	}
+	return email, password, salt, nil
 }
 
 // Obtiene todas las contraseñas de un usuario por su ID

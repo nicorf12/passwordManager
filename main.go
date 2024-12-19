@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"fyne.io/systray"
 	"log"
-	"os"
 	"password_manager/internal/controllers"
 	"password_manager/localization"
 	"password_manager/security"
@@ -22,7 +19,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error inicializando la aplicación: %v", err)
 	}
-
 	ui.StartUI(appCtx.ContUser, appCtx.DBController, appCtx.Localizer)
 }
 
@@ -41,54 +37,19 @@ func NewAppContext() (*AppContext, error) {
 	var contUser *controllers.ControllerUser
 	session, err := security.LoadSession()
 	if err == nil && session != nil {
-		fmt.Println("Session found, starting authenticated UI.")
-		contUser = controllers.NewControllerUserWithSession(dbController, session.UserID, session.UserMail, session.HashedPassword)
-	} else {
-		fmt.Println("No session found, starting login UI.")
+		contUser, err = controllers.NewControllerUserWithSession(dbController, session.UserID, session.UserMail, session.HashedPassword)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	if contUser == nil {
 		contUser = controllers.NewControllerUser(dbController)
 	}
 
 	return &AppContext{dbController, localizer, contUser}, nil
 }
 
-func onReady(appCtx *AppContext, openUIChan chan bool) {
-	systray.SetIcon(loadIcon("resources/dragon.ico"))
-	systray.SetTitle("Gestor de Contraseñas")
-	systray.SetTooltip("Gestor de Contraseñas en Ejecución")
-
-	mOpen := systray.AddMenuItem("Abrir", "Abrir la aplicación")
-	mQuit := systray.AddMenuItem("Salir", "Cerrar la aplicación")
-
-	log.Println("Menú de bandeja agregado, esperando interacciones...")
-	go func() {
-		for {
-			select {
-			case <-mOpen.ClickedCh:
-				log.Println("Se seleccionó 'Abrir'")
-				openUIChan <- true
-			case <-mQuit.ClickedCh:
-				log.Println("Cerrando la aplicación...")
-				systray.Quit()
-			}
-		}
-	}()
-}
-
-func onExit(appCtx *AppContext) {
-	log.Println("Aplicación cerrada.")
-	if err := appCtx.DBController.Close(); err != nil {
-		log.Fatalf("Error al cerrar la base de datos: %v", err)
-	}
-}
-
 func getLenguage() string {
 	return "es"
-}
-
-func loadIcon(path string) []byte {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		log.Fatalf("Error al cargar el ícono: %v", err)
-	}
-	return data
 }

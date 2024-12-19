@@ -35,7 +35,8 @@ func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBC
 				mainApp.Quit()
 			}),
 		)
-		desk.SetSystemTrayIcon(icono)
+		trayIcon, _ := fyne.LoadResourceFromPath("resources/dragon.ico")
+		desk.SetSystemTrayIcon(trayIcon)
 		desk.SetSystemTrayMenu(m)
 	}
 
