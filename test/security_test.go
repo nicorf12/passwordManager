@@ -1,6 +1,9 @@
 package test
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/assert"
+	"os"
 	"password_manager/security"
 	"testing"
 )
@@ -156,4 +159,101 @@ func contains(set string, char rune) bool {
 		}
 	}
 	return false
+}
+
+func TestSaveSession(t *testing.T) {
+	session := security.SessionData{
+		UserID:         12345,
+		UserMail:       "testuser@example.com",
+		HashedPassword: "hashedpassword123",
+	}
+
+	err := security.SaveSession(session)
+	if err != nil {
+		t.Fatalf("Error al guardar la sesión: %v", err)
+	}
+
+	_, err = os.Stat("tmp/session.json")
+	if os.IsNotExist(err) {
+		t.Fatalf("El archivo de sesión no existe")
+	}
+
+	defer clearTmpDir()
+}
+
+func TestLoadSession(t *testing.T) {
+	session := security.SessionData{
+		UserID:         12345,
+		UserMail:       "testuser@example.com",
+		HashedPassword: "hashedpassword123",
+	}
+	err := security.SaveSession(session)
+	if err != nil {
+		t.Fatalf("Error al guardar la sesión: %v", err)
+	}
+
+	loadedSession, err := security.LoadSession()
+	if err != nil {
+		t.Fatalf("Error al cargar la sesión: %v", err)
+	}
+
+	assert.Equal(t, session.UserID, loadedSession.UserID, "El UserID no coincide")
+	assert.Equal(t, session.UserMail, loadedSession.UserMail, "El UserMail no coincide")
+	assert.Equal(t, session.HashedPassword, loadedSession.HashedPassword, "La contraseña no coincide")
+
+	defer clearTmpDir()
+}
+
+func TestClearSession(t *testing.T) {
+	session := security.SessionData{
+		UserID:         12345,
+		UserMail:       "testuser@example.com",
+		HashedPassword: "hashedpassword123",
+	}
+	err := security.SaveSession(session)
+	if err != nil {
+		t.Fatalf("Error al guardar la sesión: %v", err)
+	}
+
+	err = security.ClearSession()
+	if err != nil {
+		t.Fatalf("Error al limpiar la sesión: %v", err)
+	}
+
+	_, err = os.Stat("tmp/session.json")
+	if !os.IsNotExist(err) {
+		t.Fatalf("El archivo de sesión no ha sido eliminado")
+	}
+
+	defer clearTmpDir()
+}
+
+func TestOnLoginSuccess(t *testing.T) {
+	userID := int64(12345)
+	userMail := "testuser@example.com"
+	hashedPassword := "hashedpassword123"
+
+	err := security.OnLoginSuccess(userID, userMail, hashedPassword)
+	if err != nil {
+		t.Fatalf("Error al guardar la sesión en OnLoginSuccess: %v", err)
+	}
+
+	loadedSession, err := security.LoadSession()
+	if err != nil {
+		t.Fatalf("Error al cargar la sesión: %v", err)
+	}
+
+	assert.Equal(t, userID, loadedSession.UserID, "El UserID no coincide")
+	assert.Equal(t, userMail, loadedSession.UserMail, "El UserMail no coincide")
+	assert.Equal(t, hashedPassword, loadedSession.HashedPassword, "La contraseña no coincide")
+
+	defer clearTmpDir()
+}
+
+// Función para limpiar la carpeta tmp después de cada prueba
+func clearTmpDir() {
+	err := os.RemoveAll("tmp")
+	if err != nil {
+		fmt.Printf("Error al limpiar la carpeta tmp: %v\n", err)
+	}
 }
