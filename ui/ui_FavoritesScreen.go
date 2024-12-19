@@ -36,7 +36,7 @@ func showFavoritesScreen(controller *controllers.ControllerScreen, contUser *con
 			favoritesSubtitle,
 			passwords,
 		))
-		content.SetOffset(0.25)
+		content.SetOffset(0.18)
 		w.SetContent(content)
 	}
 }

@@ -11,18 +11,20 @@ import (
 type ControllerUser struct {
 	currentUser  *models.User  // Usuario actual logueado
 	dbController *DBController // Controlador de la base de datos
+	config       *security.Config
 }
 
 // NewControllerUser crea e inicializa una instancia de ControllerUser.
-func NewControllerUser(dbC *DBController) *ControllerUser {
+func NewControllerUser(config *security.Config, dbC *DBController) *ControllerUser {
 	return &ControllerUser{
 		dbController: dbC,
 		currentUser:  nil,
+		config:       config,
 	}
 }
 
 // NewControllerUser crea e inicializa una instancia de ControllerUser.
-func NewControllerUserWithSession(dbC *DBController, id int64, email string, password string) (*ControllerUser, error) {
+func NewControllerUserWithSession(config *security.Config, dbC *DBController, id int64, email string, password string) (*ControllerUser, error) {
 	storedEmail, storedPassword, _, err := dbC.GetUserByID(id)
 	if err != nil {
 		return nil, err
@@ -45,6 +47,7 @@ func NewControllerUserWithSession(dbC *DBController, id int64, email string, pas
 	return &ControllerUser{
 		dbController: dbC,
 		currentUser:  user,
+		config:       config,
 	}, nil
 }
 
@@ -119,6 +122,20 @@ func (c *ControllerUser) GenerateNewPasswordSafe(length int, useUpper, useLower,
 // GetPasswordSecurityLevel calcula el nivel de seguridad de una contraseña del 1 al 100
 func (c *ControllerUser) GetPasswordSecurityLevel(password string) float64 {
 	return security.CalculatePasswordSecurity(password)
+}
+
+func (c *ControllerUser) GetConfig() (string, string) {
+	return c.config.Lang, c.config.Theme
+}
+
+func (c *ControllerUser) SetConfig(lang, theme string) {
+	c.config.Lang = lang
+	c.config.Theme = theme
+
+	err := security.SaveConfig(c.config)
+	if err != nil {
+		return
+	}
 }
 
 func (c *ControllerUser) SomeoneLoggedIn() bool {

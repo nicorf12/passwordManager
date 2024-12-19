@@ -19,6 +19,9 @@ func menu(controller *controllers.ControllerScreen, contUser *controllers.Contro
 		contUser.Logout()
 		controller.ShowScreen("login")
 	})
+	configButton := widget.NewButtonWithIcon("", theme.SettingsIcon(), func() {
+		controller.ShowScreen("config")
+	})
 	optionsTitle := widget.NewLabel(localizer.Get("options"))
 	allButton := widget.NewButtonWithIcon(localizer.Get("all"), theme.MediaPlayIcon(), func() {
 		controller.ShowScreen("main")
@@ -114,7 +117,7 @@ func menu(controller *controllers.ControllerScreen, contUser *controllers.Contro
 
 	menu := container.NewVBox(
 		menuTitle,
-		logoutButton,
+		container.NewVBox(logoutButton, configButton),
 		canvas.NewLine(color.White),
 		optionsTitle,
 		allButton,

@@ -28,7 +28,12 @@ func NewAppContext() (*AppContext, error) {
 		return nil, err
 	}
 
-	langCode := getLenguage()
+	config, _ := security.LoadConfig()
+	if config == nil {
+		config = security.LoadConfigDefault()
+	}
+
+	langCode := config.Lang
 	localizer, err := localization.NewLocalizer(langCode)
 	if err != nil {
 		return nil, err
@@ -37,19 +42,15 @@ func NewAppContext() (*AppContext, error) {
 	var contUser *controllers.ControllerUser
 	session, err := security.LoadSession()
 	if err == nil && session != nil {
-		contUser, err = controllers.NewControllerUserWithSession(dbController, session.UserID, session.UserMail, session.HashedPassword)
+		contUser, err = controllers.NewControllerUserWithSession(config, dbController, session.UserID, session.UserMail, session.HashedPassword)
 		if err != nil {
 			log.Println(err)
 		}
 	}
 
 	if contUser == nil {
-		contUser = controllers.NewControllerUser(dbController)
+		contUser = controllers.NewControllerUser(config, dbController)
 	}
 
 	return &AppContext{dbController, localizer, contUser}, nil
-}
-
-func getLenguage() string {
-	return "es"
 }

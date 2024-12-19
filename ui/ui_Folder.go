@@ -48,7 +48,7 @@ func showFolderScreen(controller *controllers.ControllerScreen, contUser *contro
 			container.NewHBox(nameLabel, deleteButton),
 			passwords,
 		))
-		content.SetOffset(0.25)
+		content.SetOffset(0.18)
 		w.SetContent(content)
 	}
 }

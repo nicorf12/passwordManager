@@ -43,7 +43,7 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 			passwordsSubtitle,
 			passwords,
 		))
-		content.SetOffset(0.25)
+		content.SetOffset(0.18)
 		w.SetContent(content)
 	}
 }
