@@ -1,6 +1,9 @@
 package themes
 
-import "image/color"
+import (
+	"fyne.io/fyne/v2"
+	"image/color"
+)
 
 var (
 	pink                color.Color = color.RGBA{R: 255, G: 20, B: 147, A: 255}
@@ -18,3 +21,18 @@ var (
 	disabledLightBlue   color.Color = color.RGBA{R: 100, G: 170, B: 255, A: 255}
 	transparent                     = color.Transparent
 )
+
+func GetTheme(theme string) fyne.Theme {
+	switch theme {
+	case "Dark":
+		return CustomDarkTheme{}
+	case "Light":
+		return CustomLightTheme{}
+	case "Pink":
+		return CustomPinkTheme{}
+	case "Blue":
+		return CustomBlueTheme{}
+	default:
+		return CustomDarkTheme{}
+	}
+}

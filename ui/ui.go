@@ -7,13 +7,14 @@ import (
 	"log"
 	"password_manager/internal/controllers"
 	"password_manager/localization"
+	"password_manager/ui/themes"
 	_ "password_manager/ui/themes"
 )
 
 func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBController, localizer *localization.Localizer) {
-	mainApp := app.New()
+	mainApp := app.NewWithID("com.example.passwordmanager")
 	_, t := contUser.GetConfig()
-	setSettings(mainApp, GetTheme(t))
+	setSettings(mainApp, themes.GetTheme(t))
 	mainWin := mainApp.NewWindow((*localizer).Get("passwordManager"))
 	icono, err := fyne.LoadResourceFromPath("resources/dragon.png")
 	if err != nil {
@@ -48,7 +49,7 @@ func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBC
 	*/
 
 	screenController := controllers.NewControllerScreen(mainWin)
-	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser, localizer))
+	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser, localizer, mainApp))
 	screenController.RegisterScreen("main", showMainScreen(screenController, contUser, dbController, localizer))
 	screenController.RegisterScreen("register", showRegisterScreen(screenController, dbController, localizer))
 	screenController.RegisterScreen("add", showAddPasswordScreen(screenController, contUser, dbController, localizer))

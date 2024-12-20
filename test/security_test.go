@@ -257,3 +257,35 @@ func clearTmpDir() {
 		fmt.Printf("Error al limpiar la carpeta tmp: %v\n", err)
 	}
 }
+
+func TestSynchronizer(t *testing.T) {
+	data := "Hello, World!"
+	key1 := "key1forAES123"
+	key2 := "key2forXChaCha"
+	key3 := "key3forDES123"
+
+	encryptedData, err := security.Synchronizer(data, key1, key2, key3)
+	if err != nil {
+		t.Fatalf("Error al encriptar: %v", err)
+	}
+
+	if encryptedData == data {
+		t.Fatal("Los datos encriptados no deben ser iguales a los datos originales")
+	}
+}
+
+func TestDesynchronizer(t *testing.T) {
+	encryptedData := "ucBaFcId5hpG2qnAt3sYVezguv7P4EL4GrDHjs7kkQpE07uRdGTdCHzNFmIQdMsAVraKr1HtspW0MAL+9f0+iIq+LKRp87I6chs02aUW4x6dXcVVmPPK4uBJPrk="
+	key1 := "key1forAES123"
+	key2 := "key2forXChaCha"
+	key3 := "key3forDES123"
+
+	decryptedData, err := security.Desynchronizer(encryptedData, key1, key2, key3)
+	if err != nil {
+		t.Fatalf("Error al desencriptar: %v", err)
+	}
+
+	if decryptedData != "Hello, World!" {
+		t.Fatalf("Datos desencriptados no coinciden con los originales. Esperado: %s, Obtenido: %s", "Hello, World!", decryptedData)
+	}
+}

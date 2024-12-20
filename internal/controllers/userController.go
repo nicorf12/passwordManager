@@ -3,8 +3,11 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"log"
 	"password_manager/internal/models"
 	"password_manager/security"
+	"strconv"
+	"strings"
 )
 
 // ControllerUser es el TDA que gestiona las operaciones relacionadas con usuarios.
@@ -143,4 +146,66 @@ func (c *ControllerUser) SomeoneLoggedIn() bool {
 		return false
 	}
 	return true
+}
+
+func (c *ControllerUser) EncryptToExport(data, answer0, answer1, answer2 string) (string, error) {
+	enc, err := security.Synchronizer("successful\n"+data, answer0, answer1, answer2)
+	if err != nil {
+		return "", err
+	}
+	return enc, nil
+}
+
+func (c *ControllerUser) DecryptToImport(data, answer0, answer1, answer2 string) (string, error) {
+	enc, err := security.Desynchronizer(data, answer0, answer1, answer2)
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(enc, "\n")
+	if len(lines) < 2 || lines[0] != "successful" {
+		return "", fmt.Errorf("incorrect keys")
+	}
+
+	dataUser := strings.Split(lines[1], ";")
+	if len(dataUser) != 3 {
+		return "", fmt.Errorf("insufficient user data")
+	}
+	userID, err := c.dbController.EnterUserToImport(dataUser[0], dataUser[1], dataUser[2])
+	if err != nil {
+		return "", err
+	}
+
+	if len(lines) < 3 {
+		return "", nil
+	}
+
+	for i, line := range lines[2:] {
+		datos := strings.Split(line, ";")
+		if len(datos) != 8 {
+			log.Printf("Línea %d inválida: %s\n", i+2, line)
+			continue
+		}
+
+		encryptedID, err := strconv.ParseInt(datos[0], 10, 64)
+		if err != nil {
+			log.Printf("Error al parsear encryptedID en línea %d: %v\n", i+2, err)
+			continue
+		}
+
+		isFavorite, err := strconv.Atoi(datos[7])
+		if err != nil {
+			log.Printf("Error al parsear isFavorite en línea %d: %v\n", i+2, err)
+			continue
+		}
+
+		err = c.dbController.EnterPasswordToImport(
+			0, userID, encryptedID,
+			datos[1], datos[2], datos[3], datos[4], datos[5], datos[6], isFavorite)
+		if err != nil {
+			log.Printf("Error al insertar línea %d: %v\n", i+2, err)
+		}
+	}
+
+	return enc, nil
 }

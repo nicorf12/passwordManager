@@ -44,5 +44,11 @@
   "edit": "Edit",
   "quit": "Quit,",
   "save": "Save",
-  "open": "Open"
+  "open": "Open",
+  "import": "Import",
+  "exportFailed": "Export failed",
+  "importFailed": "Import failed",
+  "question0": "What city were you born in?",
+  "question1": "What was the name of your first pet?",
+  "question2": "What was the name of your favorite childhood toy?"
 }

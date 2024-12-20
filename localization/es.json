@@ -44,5 +44,12 @@
   "edit": "Editar",
   "quit": "Salir",
   "save": "Guardar",
-  "open": "Abrir"
+  "open": "Abrir",
+  "export": "Exportar",
+  "import": "Importar",
+  "exportFailed": "Error al exportar",
+  "importFailed": "Error al improtar",
+  "question0": "¿En qué ciudad naciste?",
+  "question1": "¿Cómo se llamaba tu primera mascota?",
+  "question2": "¿Cuál era el nombre de tu juguete favorito en la niñez?"
 }

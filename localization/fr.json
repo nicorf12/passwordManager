@@ -41,5 +41,11 @@
   "hereCanSeeFavoritesPasswords": "Ici, vous pouvez voir vos mots de passe favoris",
   "folderName": "Nom du Dossier",
   "evaluate": "Évaluer le niveau de sécurité",
-  "edit": "Modifier"
+  "edit": "Modifier",
+  "import": "Importer",
+  "exportFailed": "Échec de l'exportation",
+  "importFailed": "Échec de l'importation",
+  "question0": "Dans quelle ville êtes-vous né(e) ?",
+  "question1": "Quel était le nom de votre premier animal de compagnie ?",
+  "question2": "Quel était le nom de votre jouet préféré dans votre enfance ?"
 }

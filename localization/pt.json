@@ -41,5 +41,11 @@
   "hereCanSeeFavoritesPasswords": "Aqui você pode ver suas senhas favoritas",
   "folderName": "Nome da Pasta",
   "evaluate": "Avaliar nível de segurança",
-  "edit": "Editar"
+  "edit": "Editar",
+  "import": "Importar",
+  "exportFailed": "Falha na exportação",
+  "importFailed": "Falha na importação",
+  "question0": "Em que cidade você nasceu?",
+  "question1": "Qual era o nome do seu primeiro animal de estimação?",
+  "question2": "Qual era o nome do seu brinquedo favorito na infância?"
 }

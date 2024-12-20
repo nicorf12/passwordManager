@@ -3,12 +3,17 @@ package ui
 import (
 	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"log"
 	"password_manager/internal/controllers"
 	"password_manager/localization"
 	"password_manager/ui/themes"
+	"time"
 )
 
 var (
@@ -54,7 +59,7 @@ func showConfigScreen(controller *controllers.ControllerScreen, contUser *contro
 			if err != nil {
 				fmt.Println("Error updating translations:", err)
 			}
-			setSettings(app, GetTheme(themeSelected))
+			setSettings(app, themes.GetTheme(themeSelected))
 			controller.ShowScreen("config")
 		})
 
@@ -62,22 +67,61 @@ func showConfigScreen(controller *controllers.ControllerScreen, contUser *contro
 			controller.ShowScreen("main")
 		})
 
-		content := container.NewVBox(selectLang, selectTheme, saveButton, returnButton)
-		w.SetContent(content)
-	}
-}
+		exportErrorLabel := canvas.NewText(localizer.Get("exportFailed"), theme.Color(theme.ColorNameError))
+		exportErrorLabel.Hide()
 
-func GetTheme(theme string) fyne.Theme {
-	switch theme {
-	case "Dark":
-		return themes.CustomDarkTheme{}
-	case "Light":
-		return themes.CustomLightTheme{}
-	case "Pink":
-		return themes.CustomPinkTheme{}
-	case "Blue":
-		return themes.CustomBlueTheme{}
-	default:
-		return themes.CustomDarkTheme{}
+		exportButton := widget.NewButton(localizer.Get("export"), func() {
+			data, err := dbController.GetDataToExport(contUser.GetCurrentUserId())
+			if err != nil {
+				fmt.Println("error extracting data")
+			}
+			var wExport fyne.Window
+			wExport = windowImportExport(
+				app,
+				func(answer0, answer1, answer2 string) {
+					data, err := contUser.EncryptToExport(data, answer0, answer1, answer2)
+					if err != nil {
+						fmt.Println("Error encrypting data:", err)
+					}
+					startDir, err := storage.ListerForURI(storage.NewFileURI("."))
+					if err != nil {
+						log.Println("Error obteniendo directorio inicial:", err)
+						return
+					}
+					fileDialog := dialog.NewFileSave(func(uri fyne.URIWriteCloser, err error) {
+						if err != nil {
+							exportErrorLabel.Show()
+							go func() {
+								time.Sleep(5 * time.Second)
+								exportErrorLabel.Hide()
+							}()
+							return
+						}
+						if uri == nil {
+							fmt.Println("File not selected")
+						} else {
+							fmt.Fprintln(uri, data)
+							uri.Close()
+							wExport.Close()
+						}
+					}, wExport)
+					fileDialog.SetLocation(startDir)
+					fileDialog.Show()
+				},
+				localizer,
+				"export",
+				exportErrorLabel,
+			)
+			wExport.Show()
+		})
+
+		content := container.NewVBox(
+			selectLang,
+			selectTheme,
+			saveButton,
+			exportButton,
+			returnButton,
+		)
+		w.SetContent(content)
 	}
 }

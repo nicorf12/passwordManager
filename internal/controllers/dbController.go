@@ -371,6 +371,51 @@ func (db *DBController) GetPasswordsByFavoriteAndUserID(userID int64, userPasswo
 	return passwords, nil
 }
 
+func (db *DBController) GetDataToExport(userID int64) (string, error) {
+	var result string
+
+	row := db.DB.QueryRow("SELECT email, password, salt FROM users WHERE id = ?", userID)
+	var email, password, saltBase64 string
+	if err := row.Scan(&email, &password, &saltBase64); err != nil {
+		return "", fmt.Errorf("error getting user: %v", err)
+	}
+	result = email + ";" + password + ";" + saltBase64 + "\n"
+
+	rows, err := db.DB.Query("SELECT label,name,password,website,note,encrypted_id,last_update,is_favorite FROM passwords WHERE user_id = ?", userID)
+	if err != nil {
+		return "", fmt.Errorf("error getting passwords: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var encryptedId int64
+		var label, name, website, note, lastUpdate string
+		var isFavorite int
+		if err := rows.Scan(&label, &name, &password, &website, &note, &encryptedId, &lastUpdate, &isFavorite); err != nil {
+			return "", fmt.Errorf("error scanning row: %v", err)
+		}
+		result += fmt.Sprintf("%d;", encryptedId) + label + ";" + name + ";" + password + ";" + website + ";" + note + ";" + lastUpdate + fmt.Sprintf(";%d\n", isFavorite)
+	}
+
+	return result[:len(result)-1], nil
+}
+
+func (db *DBController) EnterPasswordToImport(folderID, userID, encryptedID int64, label, name, password, website, note, lastUpdate string, isFavorite int) error {
+	_, err := db.DB.Exec("INSERT INTO passwords (user_id, folder_id,label, name, password, website, note, encrypted_id, last_update, is_favorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", userID, folderID, label, name, password, website, note, encryptedID, lastUpdate, isFavorite)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *DBController) EnterUserToImport(email, password, salt string) (int64, error) {
+	result, err := db.DB.Exec("INSERT INTO users (email, password, salt) VALUES (?, ?, ?)", email, password, salt)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 // Elimina un usuario y todas sus contraseñas
 func (db *DBController) DeleteUser(userID int64) error {
 	_, err := db.DB.Exec("DELETE FROM passwords WHERE user_id = ?", userID)
