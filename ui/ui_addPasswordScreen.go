@@ -69,6 +69,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 				passwordEntry.SetText(password)
 			}
 		})
+		generateButton.Hide()
 
 		folders, err := dbController.GetAllFolders()
 		if err != nil {
@@ -183,7 +184,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			useSpecialsCheck,
 			generateButton,
 			container.NewGridWithColumns(2, evaluateButton, securityLevel),
-			OptionsButton,
+			container.NewGridWithColumns(3, widget.NewLabel(""), OptionsButton, widget.NewLabel("")),
 			passwordWebsite,
 			websiteEntry,
 			passwordFolder,
@@ -192,7 +193,7 @@ func showAddPasswordScreen(controller *controllers.ControllerScreen, contUser *c
 			selectEncryption,
 			passwordNote,
 			note,
-			addButton,
+			container.NewGridWithColumns(3, widget.NewLabel(""), addButton, widget.NewLabel("")),
 			labelErr,
 		)
 

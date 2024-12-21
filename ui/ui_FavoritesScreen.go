@@ -32,11 +32,10 @@ func showFavoritesScreen(controller *controllers.ControllerScreen, contUser *con
 		updatePasswordsList()
 
 		content := container.NewHSplit(menu(controller, contUser, dbController, localizer), container.NewVBox(
-			favoritesTitle,
-			favoritesSubtitle,
+			container.NewVBox(favoritesTitle, favoritesSubtitle),
 			passwords,
 		))
 		content.SetOffset(0.18)
-		w.SetContent(content)
+		w.SetContent(container.NewScroll(content))
 	}
 }

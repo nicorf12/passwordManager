@@ -44,7 +44,7 @@ func showMainScreen(controller *controllers.ControllerScreen, contUser *controll
 			passwords,
 		))
 		content.SetOffset(0.18)
-		w.SetContent(content)
+		w.SetContent(container.NewScroll(content))
 	}
 }
 

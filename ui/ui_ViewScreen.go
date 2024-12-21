@@ -139,7 +139,7 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			dialog.Show()
 		})
 
-		editButton = widget.NewButton(localizer.Get("edit"), func() {
+		editButton = widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
 			if !isVisible {
 				passwordEntry.SetText(password["password"])
 				showHideButton.SetIcon(theme.VisibilityOffIcon())
@@ -159,7 +159,7 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			cancelButton.Show()
 		})
 
-		saveButton = widget.NewButton(localizer.Get("save"), func() {
+		saveButton = widget.NewButtonWithIcon("", theme.DocumentSaveIcon(), func() {
 			updatedPassword := make(map[string]interface{})
 
 			updatedPassword["label"] = labelEntry.Text
@@ -211,7 +211,7 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 		})
 		saveButton.Hide()
 
-		cancelButton = widget.NewButton(localizer.Get("cancel"), func() {
+		cancelButton = widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
 			labelEntry.Disable()
 			nameEntry.Disable()
 			passwordEntry.Disable()
@@ -246,7 +246,7 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 		securityLevel.Hide()
 
 		content := container.NewVBox(
-			container.NewHBox(viewTitle, returnButton, deleteButton),
+			container.NewHBox(viewTitle, returnButton, deleteButton, editButton, saveButton, cancelButton),
 			passwordLabel,
 			labelEntry,
 			passwordName,
@@ -262,9 +262,6 @@ func showViewScreen(controller *controllers.ControllerScreen, contUser *controll
 			selectEncryption,
 			passwordNote,
 			note,
-			editButton,
-			saveButton,
-			cancelButton,
 		)
 
 		scrollContent := container.NewScroll(content)

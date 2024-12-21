@@ -50,6 +50,6 @@ func showFolderScreen(controller *controllers.ControllerScreen, contUser *contro
 			passwords,
 		))
 		content.SetOffset(0.18)
-		w.SetContent(content)
+		w.SetContent(container.NewScroll(content))
 	}
 }

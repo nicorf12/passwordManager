@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
 
 type SessionData struct {
-	UserID         int64  `json:"user_id"`
-	UserMail       string `json:"user_mail"`
-	HashedPassword string `json:"hashed_password"`
+	UserID         int64     `json:"user_id"`
+	UserMail       string    `json:"user_mail"`
+	HashedPassword string    `json:"hashed_password"`
+	LastAccessed   time.Time `json:"last_accessed"`
 }
 
 func SaveSession(data SessionData) error {
-	fmt.Println(len(data.HashedPassword))
+	data.LastAccessed = time.Now()
 
 	err := os.MkdirAll("tmp", os.ModePerm)
 	if err != nil {
@@ -53,8 +55,7 @@ func LoadSession() (*SessionData, error) {
 		return nil, err
 	}
 
-	// Extrae la contraseña hash que está al final del archivo (ultimos 44 caracteres)
-	// Nota: asumimos que el hash tiene una longitud fija de 44 caracteres
+	// Extrae la contraseña hash que está al final del archivo (últimos 44 caracteres)
 	hashedPasswordLength := 44
 	encryptedSession := encryptedData[:len(encryptedData)-hashedPasswordLength]
 	hashedPassword := string(encryptedData[len(encryptedData)-hashedPasswordLength:])
@@ -66,6 +67,21 @@ func LoadSession() (*SessionData, error) {
 
 	var data SessionData
 	if err := json.Unmarshal([]byte(decryptedData), &data); err != nil {
+		return nil, err
+	}
+
+	if time.Since(data.LastAccessed) > 2*24*time.Hour {
+		err := ClearSession()
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("la sesión ha expirado, el archivo de sesión ha sido eliminado")
+	}
+
+	data.LastAccessed = time.Now()
+
+	err = SaveSession(data)
+	if err != nil {
 		return nil, err
 	}
 
@@ -86,5 +102,5 @@ func OnLoginSuccess(userID int64, userMail string, hashedPassword string) error 
 }
 
 func ClearSession() error {
-	return os.Remove("tmp/session.json")
+	return os.Remove("tmp/session")
 }
