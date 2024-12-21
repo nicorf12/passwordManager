@@ -45,6 +45,7 @@
   "quit": "Quit,",
   "save": "Save",
   "open": "Open",
+  "export": "Export",
   "import": "Import",
   "exportFailed": "Export failed",
   "importFailed": "Import failed",
