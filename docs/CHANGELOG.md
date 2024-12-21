@@ -10,6 +10,7 @@ Se centra en la sincronización de datos entre distintas instancias del programa
 
 El archivo se encripta 3 veces con 3 claves derivadas de respuestas a preguntas genéricas a la hora de importar/exportar.
 
+---
 
 ## 0.2.0 : Mejora
 **Versión actualizada del programa.**  
