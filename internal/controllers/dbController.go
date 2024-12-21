@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	_ "modernc.org/sqlite" // Importa el driver de SQLite
+	"os"
 	"password_manager/internal/models"
 	"password_manager/security"
 	"strconv"
@@ -36,6 +37,11 @@ type DBController struct {
 
 // Inicializa la base de datos y crea las tablas necesarias
 func NewDBController() (*DBController, error) {
+	err := os.MkdirAll("db", os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating folder 'db': %v", err)
+	}
+
 	db, err := sql.Open("sqlite", "db/contraseñas.db")
 	if err != nil {
 		return nil, fmt.Errorf("Error connecting to database: %v", err)

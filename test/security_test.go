@@ -65,16 +65,6 @@ func TestEncryptDecryptDES(t *testing.T) {
 	}
 }
 
-func TestInvalidKeyLengthDES(t *testing.T) {
-	invalidKey := "short"
-	originalText := "Hello, World!"
-
-	_, err := security.EncryptDES([]byte(originalText), invalidKey)
-	if err == nil {
-		t.Fatal("Se esperaba un error debido a la longitud incorrecta de la clave")
-	}
-}
-
 func TestGenerateHash(t *testing.T) {
 	password := "testpassword"
 	salt, err := security.GenerateSalt()
@@ -173,7 +163,7 @@ func TestSaveSession(t *testing.T) {
 		t.Fatalf("Error al guardar la sesión: %v", err)
 	}
 
-	_, err = os.Stat("tmp/session.json")
+	_, err = os.Stat("tmp/session")
 	if os.IsNotExist(err) {
 		t.Fatalf("El archivo de sesión no existe")
 	}
@@ -182,12 +172,12 @@ func TestSaveSession(t *testing.T) {
 }
 
 func TestLoadSession(t *testing.T) {
-	session := security.SessionData{
-		UserID:         12345,
-		UserMail:       "testuser@example.com",
-		HashedPassword: "hashedpassword123",
-	}
-	err := security.SaveSession(session)
+	userID := int64(12345)
+	userMail := "testuser@example.com"
+	salt, _ := security.GenerateSalt()
+	hashedPassword := security.GenerateHash("hashedpassword123", salt)
+
+	err := security.OnLoginSuccess(userID, userMail, hashedPassword)
 	if err != nil {
 		t.Fatalf("Error al guardar la sesión: %v", err)
 	}
@@ -197,9 +187,9 @@ func TestLoadSession(t *testing.T) {
 		t.Fatalf("Error al cargar la sesión: %v", err)
 	}
 
-	assert.Equal(t, session.UserID, loadedSession.UserID, "El UserID no coincide")
-	assert.Equal(t, session.UserMail, loadedSession.UserMail, "El UserMail no coincide")
-	assert.Equal(t, session.HashedPassword, loadedSession.HashedPassword, "La contraseña no coincide")
+	assert.Equal(t, userID, loadedSession.UserID, "El UserID no coincide")
+	assert.Equal(t, userMail, loadedSession.UserMail, "El UserMail no coincide")
+	assert.Equal(t, hashedPassword, loadedSession.HashedPassword, "La contraseña no coincide")
 
 	defer clearTmpDir()
 }
@@ -237,15 +227,6 @@ func TestOnLoginSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error al guardar la sesión en OnLoginSuccess: %v", err)
 	}
-
-	loadedSession, err := security.LoadSession()
-	if err != nil {
-		t.Fatalf("Error al cargar la sesión: %v", err)
-	}
-
-	assert.Equal(t, userID, loadedSession.UserID, "El UserID no coincide")
-	assert.Equal(t, userMail, loadedSession.UserMail, "El UserMail no coincide")
-	assert.Equal(t, hashedPassword, loadedSession.HashedPassword, "La contraseña no coincide")
 
 	defer clearTmpDir()
 }

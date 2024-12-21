@@ -121,7 +121,7 @@ func EncryptDES(data []byte, key string) (string, error) {
 	if len(keyBytes) < des.BlockSize {
 		return "", fmt.Errorf("clave demasiado corta")
 	}
-	
+
 	keyBytes = keyBytes[:des.BlockSize]
 
 	block, err := des.NewCipher(keyBytes)

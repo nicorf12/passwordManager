@@ -59,7 +59,7 @@ func LoadSession() (*SessionData, error) {
 	hashedPasswordLength := 44
 	encryptedSession := encryptedData[:len(encryptedData)-hashedPasswordLength]
 	hashedPassword := string(encryptedData[len(encryptedData)-hashedPasswordLength:])
-
+	
 	decryptedData, err := DecryptAES(string(encryptedSession), hashedPassword)
 	if err != nil {
 		return nil, err

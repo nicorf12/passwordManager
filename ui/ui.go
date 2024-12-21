@@ -3,6 +3,7 @@ package ui
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"log"
 	"password_manager/internal/controllers"
@@ -24,29 +25,30 @@ func StartUI(contUser *controllers.ControllerUser, dbController *controllers.DBC
 	mainWin.SetIcon(icono)
 	mainWin.Resize(fyne.NewSize(800, 600))
 
-	/*
-		if desk, ok := mainApp.(desktop.App); ok {
-			m := fyne.NewMenu(localizer.Get("passwordManager"),
-				fyne.NewMenuItem(localizer.Get("open"), func() {
-					mainWin.Show()
-				}),
-				fyne.NewMenuItem(localizer.Get("quit"), func() {
-					err := dbController.Close() // arreglar para q no este aca
-					if err != nil {
-						return
-					}
-					mainApp.Quit()
-				}),
-			)
-			trayIcon, _ := fyne.LoadResourceFromPath("resources/dragon.ico")
-			desk.SetSystemTrayIcon(trayIcon)
-			desk.SetSystemTrayMenu(m)
+	if desk, ok := mainApp.(desktop.App); ok {
+		m := fyne.NewMenu(localizer.Get("passwordManager"),
+			fyne.NewMenuItem(localizer.Get("open"), func() {
+				mainWin.Show()
+			}),
+			fyne.NewMenuItem(localizer.Get("quit"), func() {
+				dbController.Close()
+				mainApp.Quit()
+			}),
+		)
+
+		trayIcon, err := fyne.LoadResourceFromPath("resources/dragon.ico")
+		if err != nil {
+			log.Println("Error al cargar el ícono de la bandeja:", err)
+			return
 		}
 
-		mainWin.SetCloseIntercept(func() {
-			mainWin.Hide()
-		})
-	*/
+		desk.SetSystemTrayIcon(trayIcon)
+		desk.SetSystemTrayMenu(m)
+	}
+
+	mainWin.SetCloseIntercept(func() {
+		mainWin.Hide()
+	})
 
 	screenController := controllers.NewControllerScreen(mainWin)
 	screenController.RegisterScreen("login", showLoginScreen(screenController, contUser, localizer, mainApp))
