@@ -2,6 +2,8 @@ package security
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"os"
 )
 
@@ -12,29 +14,58 @@ type SessionData struct {
 }
 
 func SaveSession(data SessionData) error {
+	fmt.Println(len(data.HashedPassword))
+
 	err := os.MkdirAll("tmp", os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	file, err := os.Create("tmp/session.json")
+	file, err := os.Create("tmp/session")
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	return json.NewEncoder(file).Encode(data)
+	sessionJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	encryptedData, err := EncryptAES(sessionJSON, data.HashedPassword)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write([]byte(encryptedData + data.HashedPassword))
+	return err
 }
 
 func LoadSession() (*SessionData, error) {
-	file, err := os.Open("tmp/session.json")
+	file, err := os.Open("tmp/session")
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	encryptedData, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extrae la contraseña hash que está al final del archivo (ultimos 44 caracteres)
+	// Nota: asumimos que el hash tiene una longitud fija de 44 caracteres
+	hashedPasswordLength := 44
+	encryptedSession := encryptedData[:len(encryptedData)-hashedPasswordLength]
+	hashedPassword := string(encryptedData[len(encryptedData)-hashedPasswordLength:])
+
+	decryptedData, err := DecryptAES(string(encryptedSession), hashedPassword)
+	if err != nil {
+		return nil, err
+	}
+
 	var data SessionData
-	if err := json.NewDecoder(file).Decode(&data); err != nil {
+	if err := json.Unmarshal([]byte(decryptedData), &data); err != nil {
 		return nil, err
 	}
 
