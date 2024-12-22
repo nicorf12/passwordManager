@@ -19,8 +19,8 @@ Un gestor de contraseñas permite generar contraseñas únicas y seguras, evitan
 ## Descarga
 
 ### Binarios 
-- windows amd64: 
-- linux amd64:
+- windows amd64: https://github.com/nicorf12/passwordManager/releases/download/release-v0.3.2/win_amd64_firmado.rar
+- linux amd64: https://github.com/nicorf12/passwordManager/releases/download/release-v0.3.2/lin_amd64_firmado.zip
 
 #### Instalación
 
@@ -45,7 +45,7 @@ Para instalar el gestor de contraseñas, sigue estos pasos:
 
 
 ### Codigo fuente
-- aaa
+- https://github.com/nicorf12/passwordManager/archive/refs/tags/release-v0.3.2.zip
 
 Puedes encontrar mas informacion del proyecto en el README dentro de docs.
 
