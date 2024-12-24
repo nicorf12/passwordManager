@@ -18,40 +18,38 @@ Un gestor de contraseñas permite generar contraseñas únicas y seguras, evitan
 
 ## Descarga
 
-### Binarios 
-- windows amd64: https://github.com/nicorf12/passwordManager/releases/download/release-v0.3.2/win_amd64_firmado.rar
-- linux amd64: https://github.com/nicorf12/passwordManager/releases/download/release-v0.3.2/lin_amd64_firmado.zip
+### Binarios
+- **Windows amd64:** https://github.com/nicorf12/passwordManager/releases/download/release-v0.3.3/win_amd64.rar
+- **Linux amd64:* https://github.com/nicorf12/passwordManager/releases/download/release-v0.3.3/lin_amd64.zip
 
-#### Instalación
+### Instalación
 
 Para instalar el gestor de contraseñas, sigue estos pasos:
 
-1. **Primera descompresión**:  
-   Descarga el archivo `*_amd64` y descomprímelo. Dentro encontrarás:
-    - El binario ejecutable.
-    - Una carpeta `resources`.
-    - Una carpeta `localizations`.
+1. **Descompresión:**
+   Descarga el archivo `.rar` correspondiente y descomprímelo. Dentro encontrarás:
+   - El binario ejecutable.
+   - La firma digital.
+   - Una carpeta `resources`.
+   - Una carpeta `localizations`.
+   - Un archivo `LICENSE`.
+   - Un archivo `README` con las instrucciones de instalación.
 
-2. **Segunda descompresión**:  
-   Descomprime el archivo generado en el paso anterior. Dentro encontrarás:
-    - La firma digital.
-    - La clave pública.
-    - Los elementos obtenidos en la primera descompresión (binario y carpetas).
+2. **Preparación del binario:**
+   Una vez descomprimido el archivo, el binario estará listo para utilizarse.
 
-3. **Preparación del binario**:  
-   Una vez descomprimidos ambos archivos, el binario estará listo para utilizarse.
+**Nota:** Antes de ejecutar el binario, verifica la firma digital utilizando la clave pública incluida en el `README` dentro del comprimido para asegurar la integridad y autenticidad del software.
 
-**Nota**: Antes de ejecutar el binario, verifica la firma digital utilizando la clave pública para asegurar la integridad y autenticidad del software.
+### Código fuente
+- https://github.com/nicorf12/passwordManager/archive/refs/tags/release-v0.3.3.zip
 
+Puedes encontrar más información del proyecto en el archivo `README` dentro de la carpeta `docs`.
 
-### Codigo fuente
-- https://github.com/nicorf12/passwordManager/archive/refs/tags/release-v0.3.2.zip
+## Almacenamiento
+Para este proyecto, utilizamos SQLite como solución de almacenamiento local. Esta elección se debe a que es un proyecto personal, no dedicado, y no estamos en situación de costear un servidor. SQLite proporciona una base de datos ligera, eficiente y fácil de integrar con nuestra aplicación, permitiendo mantener la simplicidad del desarrollo.
 
-Puedes encontrar mas informacion del proyecto en el README dentro de docs.
-
-## Imagenes
-
-
+## Sincronización de Contraseñas
+Dado que la base de datos es local, la sincronización de contraseñas entre computadoras se realiza mediante un sistema de exportación e importación de archivos encriptados. Esta funcionalidad permite transferir las credenciales de manera segura y sencilla. Los archivos exportados están cifrados, asegurando que solo puedan ser leídos por la aplicación y el usuario autorizado, protegiendo así la privacidad de los datos durante la transferencia.
 
 ## Descargo de Responsabilidades
 
@@ -60,3 +58,22 @@ Este proyecto se proporciona "tal cual", sin garantías de ningún tipo, ya sean
 El autor no será responsable de ninguna pérdida de datos, daño a la propiedad o daño incidental o consecuente derivado del uso, mal uso o incapacidad para usar este software, incluso si se ha advertido al autor de la posibilidad de tales daños.
 
 Este gestor de contraseñas tiene como objetivo mejorar la seguridad y facilitar la gestión de contraseñas. Sin embargo, ningún sistema es infalible, y el usuario es responsable de la correcta implementación y uso del software. Se recomienda seguir buenas prácticas de seguridad y mantener el software actualizado.
+
+## Imagenes
+
+**Login**<br>
+![Login](screenshots/login.PNG)
+
+**Contraseñas & Temas**<br>
+![Dark](screenshots/dark%20theme.PNG)
+![Light](screenshots/light%20theme.PNG)
+![Pink](screenshots/pink%20theme.PNG)
+![Blue](screenshots/blue%20theme.PNG)
+
+**Añadir contraseña**<br>
+![añadir](screenshots/añadir_contraseña.PNG)
+
+**Ver contraseña**<br>
+![ver](screenshots/ver.PNG)
+
+
